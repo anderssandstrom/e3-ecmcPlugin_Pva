@@ -14,6 +14,7 @@
 #define ECMC_PV_H_
 
 #include <string>
+#include <atomic>         // std::atomic_flag
 #include "pv/pvaClient.h"
 #include <pv/convert.h>
 #include "ecmcPvDefs.h"
@@ -24,16 +25,29 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using namespace epics::pvaClient;
 
+enum ecmc_pva_cmd {
+  ECMC_PV_CMD_NONE = 0,
+  ECMC_PV_CMD_GET  = 1,
+  ECMC_PV_CMD_PUT  = 2,  
+  ECMC_PV_CMD_REG  = 3,  
+};
+
 class ecmcPv {
  public:
-  ecmcPv(std::string name, std::string providerName);
+  ecmcPv(std::string name, std::string providerName, int index);
   ~ecmcPv();
   int    getError();
   int    reset();
-  double get();
+  void   get();
   void   put(double value);
+  double getLastReadValue();
+  bool   busy();
+  void   exeCmdThread();
 
  private:
+
+ static std::string    to_string(int value);
+
   std::string           name_;
   std::string           providerName_;
 //   pvac::ClientProvider *provider_;
@@ -56,6 +70,15 @@ class ecmcPv {
   PvaClientMonitorPtr monitor_;
   PvaClientMonitorDataPtr monitorData_;
 
+  // Thread related
+  epicsEvent            doCmdEvent_;
+  int                   destructs_;
+  ecmc_pva_cmd          cmd_;
+  std::atomic_flag      busy_;
+
+  int                   index_;
+  double                valueLatestRead_;
+  double                valueToWrite_;
 };
 
 #endif  /* ECMC_PV_H_ */

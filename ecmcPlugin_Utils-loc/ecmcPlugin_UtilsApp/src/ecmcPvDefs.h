@@ -20,5 +20,6 @@
 #define ECMC_PV_PUT_ERROR -3
 #define ECMC_PV_HANDLE_OUT_OF_RANGE -4
 #define ECMC_PV_IOC_NOT_STARTED -5
+#define ECMC_PV_BUSY -6
 
 #endif  /* ECMC_PV_DEFS_H_ */
