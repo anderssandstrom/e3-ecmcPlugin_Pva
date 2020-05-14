@@ -45,7 +45,7 @@ require ecmcPlugin_Pva master  # te get access to db file..
 
 ########################################################################s######
 ## Load plugin: Utils
-epicsEnvSet(ECMC_PLUGIN_FILNAME,"/epics/base-7.0.3.1/require/3.1.2/siteMods/ecmcPlugin_Pva/master/lib/${EPICS_HOST_ARCH=linux-x86_64}/libecmcPlugin_Utils.so")
+epicsEnvSet(ECMC_PLUGIN_FILNAME,"/epics/base-7.0.3.1/require/3.1.2/siteMods/ecmcPlugin_Utils/master/lib/${EPICS_HOST_ARCH=linux-x86_64}/libecmcPlugin_Utils.so")
 ${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG='${ECMC_PLUGIN_CONFIG="EMPTY"}', REPORT=1"
 
 ##############################################################################
