@@ -1,0 +1,32 @@
+# AI record
+record(ai,"$(P)AI"){
+  field(PINI, "1")
+  field(DTYP, "asynFloat64")
+  field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=0))T_SMP_MS=$(T_SMP_MS=1000)/TYPE=asynFloat64/plcs.plc0.static.AI?")
+  field(PREC, "$(PREC=3)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "$(TSE=0)")
+}
+
+# AO record
+record(ao,"$(P)AO"){
+  field(PINI, "1")
+  field(DTYP, "asynFloat64")
+  field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=0))T_SMP_MS=$(T_SMP_MS=1000)/TYPE=asynFloat64/plcs.plc0.static.AO=")
+  field(PREC, "$(PREC=3)")
+  field(SCAN, "Passive")
+}
+
+# BI record
+record(bi,"$(P)BI"){
+  field(PINI, "1")  
+  field(PREC, "$(PREC=3)")
+  field(SCAN, "1 second")
+}
+
+# BO record
+record(bo,"$(P)BO"){
+  field(PINI, "1")
+  field(DTYP, "asynFloat64")  
+  field(SCAN, "Passive")
+}
