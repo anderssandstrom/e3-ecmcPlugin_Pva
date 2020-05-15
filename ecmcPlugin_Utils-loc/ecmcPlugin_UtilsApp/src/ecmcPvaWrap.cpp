@@ -18,61 +18,76 @@
 #include "ecmcPvaWrap.h"
 #include "ecmcPvRegFunc.h"
 
-//  void* getPvGetObj() {
-//    return (void*) new pvget<double>();
-//  }
-
-//  void* getPvPutObj() {
-//    return (void*) new pvput<double>();
-//  }
-
 void* getPvRegObj() {
   return (void*) new pvreg<double>();
 }
 
-void reset(double handle) {
+void resetError(int handle) {
   try{
     pvVector.at(handle-1)->reset();
   }    
   catch(std::exception &e){
-    std::cerr << "Error: " << e.what() << "\n";
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_RST_ERR "(): " << e.what() << "\n";
     return;
   }
   return;
 }
 
-double getError(double handle) {
+int getError(int handle) {
   try{
     return pvVector.at(handle-1)->getError();
   }    
   catch(std::exception &e){
-    std::cerr << "Error: " << e.what() << "\n";
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_ERR "(): " << e.what() << "\n";
     return 0.0;
   }
   return 0.0;
-}
+}  
 
 // Normal plc functions
-double getData(double handle) {
+int exeGetDataCmd(int handle) {
   try{
-    return pvVector.at(handle-1)->get();
+    pvVector.at(handle-1)->get();
+    return 0;
   }    
   catch(std::exception &e){
-    std::cerr << "Error: " << e.what() << "\n";
-    return 0.0;
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(): " << e.what() << "\n";
+    return ECMC_PV_GET_ERROR;
   }
-  return 0.0;
+  return ECMC_PV_PUT_ERROR;
 }
 
 // Normal plc functions
-double putData(double handle, double value) {
+int exePutDataCmd(int handle, double value) {
   try{
-    pvVector.at((int)handle-1)->put(value);
-    return 0.0;
+    pvVector.at(handle-1)->put(value);
+    return 0;
   }    
   catch(std::exception &e){
-    std::cerr << "Error: " << e.what() << "\n";
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_PUT_ASYNC "(): " << e.what() << "\n";
     return ECMC_PV_PUT_ERROR;
   }
   return ECMC_PV_PUT_ERROR;
+}
+
+double getLastValue(int handle) {
+  try{
+    return pvVector.at(handle-1)->getLastReadValue();
+  }    
+  catch(std::exception &e){
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_VALUE "(): "<< e.what() << "\n";
+    return 0;
+  }
+  return 0;
+}
+
+int getBusy(int handle) {
+  try{
+    return pvVector.at(handle-1)->busy();
+  }    
+  catch(std::exception &e){
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_BUSY "(): "<< e.what() << "\n";
+    return 0;
+  }
+  return 0;
 }

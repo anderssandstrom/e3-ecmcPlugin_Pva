@@ -1,12 +1,13 @@
+###############################################################################
+# Example of pv access fucntions in ecmcPlugin_Utils
 static.AI:=static.AI+1;
 var error:=0;
 
+####### READ PV IOC_TEST:AI ###################################################
+
 # Register pv IOC_TEST:AI when ecmc ioc has started
 if(ioc_get_started() and static.aiHandle<=0) {
-  static.before1:=ec_get_time();
   static.aiHandle:=pv_reg_async('IOC_TEST:AI','pva');
-  static.after1:=ec_get_time();
-  ${DBG=#}println('pv_reg_async AI exe time [ns] : ', static.after1-static.before1);
 };
 
 # Read value of "IOC_TEST:AI" when registered
@@ -14,33 +15,26 @@ if(static.aiHandle > 0) {
   var retPvGet:=pv_get_value(static.aiHandle);
   # Start new read if not busy
   if(not(pv_get_busy(static.aiHandle))) {
-    static.before2:=ec_get_time();
     error:=pv_get_async(static.aiHandle);
     println('Busy after pv_get_async(): ', pv_get_busy(static.aiHandle));
-    static.after2:=ec_get_time();
-    ${DBG=#}println('pv_get exe time [ns] : ', static.after2-static.before2);
   };
   ${DBG=#}println('AI from PV:', retPvGet);
   ${DBG=#}println('AI in PLC :', static.AI);
 };
 
+####### WRITE PV IOC_TEST:AO ##################################################
+
 # Register pv IOC_TEST:AO when ecmc ioc has started
 if(ioc_get_started() and static.aoHandle<=0) {
-  static.before3:=ec_get_time();
   static.aoHandle:=pv_reg_async('IOC_TEST:AO','pva');
-  static.after3:=ec_get_time();
-  ${DBG=#}println('pv_reg_async AO exe time [ns] : ', static.after3-static.before3);
 };
 
 # Write value of "IOC_TEST:AO" when registered
 if(static.aoHandle > 0) {
   # Start new write if not busy
   if(not(pv_get_busy(static.aoHandle))) {
-    static.before4:=ec_get_time();
     error:=pv_put_async(static.aoHandle,static.AI);
     println('Busy after pv_put_async(): ', pv_get_busy(static.aoHandle));
-    static.after4:=ec_get_time();
-    ${DBG=#}println('pv_put exe time [ns] : ', static.after4-static.before4);
   }  
   ${DBG=#}println('AO to PV:', static.AI);
   ${DBG=#}println('AO from PV:', static.AO);

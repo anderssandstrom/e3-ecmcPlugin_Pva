@@ -100,20 +100,28 @@ int pvaExitRT(void){
 }
 
 // Normal PLC functions
-double pvaGet(double handle) {
-  return getData(handle);
+double pvaExeGetCmd(double handle) {
+  return (double)exeGetDataCmd((int)handle);
 }
 
-double pvaPut(double handle, double value) {
-  return putData(handle, value);
+double pvaExePutCmd(double handle, double value) {
+  return (double)exePutDataCmd((int)handle, value);
+}
+
+double pvaGetLastValue(double handle) {
+  return getLastValue((int)handle);
+}
+
+double pvaGetBusy(double handle) {
+  return getBusy((int)handle);
 }
 
 double pvaGetErr(double handle) {
-  return getError(handle);
+  return (double)getError((int)handle);
 }
 
 double pvaRstErr(double handle) {
-  reset(handle);
+  resetError((int)handle);
   return 0.0;
 }
 
@@ -130,9 +138,9 @@ struct ecmcPluginData pluginDataDef = {
   // Allways use ECMC_PLUG_VERSION_MAGIC
   .ifVersion = ECMC_PLUG_VERSION_MAGIC, 
   // Name 
-  .name = "ecmcPlugin_Pva",
+  .name = "ecmcPlugin_Utils",
   // Description
-  .desc = "pvAccess plugin for use with ecmc.",
+  .desc = "Utility plugin for use with ecmc. Funcs: pvAccess, ioc status.",
   // Option description
   .optionDesc = "No options",
   // Plugin version
@@ -149,9 +157,9 @@ struct ecmcPluginData pluginDataDef = {
   .realtimeExitFnc = pvaExitRT,
   // PLC funcs
   .funcs[0] =
-      { /*----pv_reg----*/
-        .funcName = "pv_reg",
-        .funcDesc = "handle = pv_reg(<pv name>, <provider name pva/ca>) : register new pv.",
+      { /*----pv_reg_async----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_REG_ASYNC,
+        .funcDesc = "handle = " ECMC_PV_PLC_CMD_PV_REG_ASYNC "(<pv name>, <provider name pva/ca>) : register new pv.",
         .funcArg0 = NULL,
         .funcArg1 = NULL,
         .funcArg2 = NULL,
@@ -163,15 +171,15 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg8 = NULL,
         .funcArg9 = NULL,
         .funcArg10 = NULL,        
-        .funcGenericObj = NULL,  // will assigned here during construct
+        .funcGenericObj = NULL,  //will be assigned here during plugin construct (cannot initiate with non-const)
       },
   .funcs[1] =
-      { /*----pv_put----*/
-        .funcName = "pv_put",
-        .funcDesc = "error = pv_put(<handle>, <value>) : Set pv value.",
+      { /*----pv_put_async----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_PUT_ASYNC,
+        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_PUT_ASYNC "(<handle>, <value>) : Execute async pv_put cmd.",
         .funcArg0 = NULL,
         .funcArg1 = NULL,
-        .funcArg2 = pvaPut,
+        .funcArg2 = pvaExePutCmd,
         .funcArg3 = NULL,
         .funcArg4 = NULL,
         .funcArg5 = NULL,
@@ -183,11 +191,11 @@ struct ecmcPluginData pluginDataDef = {
         .funcGenericObj = NULL,
       },
   .funcs[2] =
-      { /*----pv_get----*/
-        .funcName = "pv_get",
-        .funcDesc = "value = pv_get(<handle>) : Get pv value.",
+      { /*----pv_get_async----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_GET_ASYNC,
+        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(<handle>) : Execute async pv_get cmd.",
         .funcArg0 = NULL,
-        .funcArg1 = pvaGet,
+        .funcArg1 = pvaExeGetCmd,
         .funcArg2 = NULL,
         .funcArg3 = NULL,
         .funcArg4 = NULL,
@@ -200,9 +208,44 @@ struct ecmcPluginData pluginDataDef = {
         .funcGenericObj = NULL,
       },
   .funcs[3] =
+      { /*----pv_get_value----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_GET_VALUE,
+        .funcDesc = "value = " ECMC_PV_PLC_CMD_PV_GET_VALUE "(<handle>) : Get result from last pv_get_async() cmd.",
+        .funcArg0 = NULL,
+        .funcArg1 = pvaGetLastValue,
+        .funcArg2 = NULL,
+        .funcArg3 = NULL,
+        .funcArg4 = NULL,
+        .funcArg5 = NULL,
+        .funcArg6 = NULL,
+        .funcArg7 = NULL,
+        .funcArg8 = NULL,
+        .funcArg9 = NULL,
+        .funcArg10 = NULL,
+        .funcGenericObj = NULL,
+      },
+  .funcs[4] =
+      { /*----pv_get_busy----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_GET_BUSY,
+        .funcDesc = "busy = "  ECMC_PV_PLC_CMD_PV_GET_BUSY "(<handle>) : Get status of last async command (pv_reg_async(), pv_get_async(), pv_put_async()).",
+        .funcArg0 = NULL,
+        .funcArg1 = pvaGetBusy,
+        .funcArg2 = NULL,
+        .funcArg3 = NULL,
+        .funcArg4 = NULL,
+        .funcArg5 = NULL,
+        .funcArg6 = NULL,
+        .funcArg7 = NULL,
+        .funcArg8 = NULL,
+        .funcArg9 = NULL,
+        .funcArg10 = NULL,
+        .funcGenericObj = NULL,
+      },
+
+  .funcs[5] =
       { /*----pv_get_err----*/
-        .funcName = "pv_get_err",
-        .funcDesc = "error = pv_get_err(<handle>) : Get error code.",
+        .funcName = ECMC_PV_PLC_CMD_PV_GET_ERR,
+        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ERR "(<handle>) : Get error code.",
         .funcArg0 = NULL,
         .funcArg1 = pvaGetErr,
         .funcArg2 = NULL,
@@ -216,10 +259,10 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[4] =
+  .funcs[6] =
       { /*----pv_rst_err----*/
-        .funcName = "pv_rst_err",
-        .funcDesc = "pv_rst_err(<handle>) : Reset error code.",
+        .funcName = ECMC_PV_PLC_CMD_PV_RST_ERR,
+        .funcDesc = ECMC_PV_PLC_CMD_PV_RST_ERR "(<handle>) : Reset error code.",
         .funcArg0 = NULL,
         .funcArg1 = pvaRstErr,
         .funcArg2 = NULL,
@@ -233,10 +276,10 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[5] =
-      { /*----get_ecmc_ioc_state----*/
-        .funcName = "get_ecmc_ioc_state",
-        .funcDesc = "state = get_ecmc_ioc_state() : Get ecmc epics ioc state.",
+  .funcs[7] =
+      { /*----ut_get_ecmc_ioc_state----*/
+        .funcName = "ioc_get_state",
+        .funcDesc = "state = ioc_get_state() : Get ecmc epics ioc state.",
         .funcArg0 = pvaGetIOCState,
         .funcArg1 = NULL,
         .funcArg2 = NULL,
@@ -250,10 +293,10 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[6] =
-      { /*----get_ecmc_ioc_started----*/
-        .funcName = "get_ecmc_ioc_started",
-        .funcDesc = "started = get_ecmc_ioc_started() : Get ecmc epics ioc started.",
+  .funcs[8] =
+      { /*----ut_get_ecmc_ioc_started----*/
+        .funcName = "ioc_get_started",
+        .funcDesc = "started = ioc_get_started() : Get ecmc epics ioc started.",
         .funcArg0 = pvaGetIOCStarted,
         .funcArg1 = NULL,
         .funcArg2 = NULL,
@@ -268,7 +311,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcGenericObj = NULL,
       },
 
-  .funcs[7]  = {0}, // last element set all to zero..
+  .funcs[9]  = {0}, // last element set all to zero..
   .consts[0] = {0}, // last element set all to zero..
 };
 

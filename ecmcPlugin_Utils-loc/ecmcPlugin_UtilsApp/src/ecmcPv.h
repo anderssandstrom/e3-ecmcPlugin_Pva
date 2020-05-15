@@ -74,7 +74,7 @@ class ecmcPv {
   epicsEvent            doCmdEvent_;
   int                   destructs_;
   ecmc_pva_cmd          cmd_;
-  std::atomic_flag      busy_;
+  std::atomic_flag      busyLock_;  
 
   int                   index_;
   double                valueLatestRead_;

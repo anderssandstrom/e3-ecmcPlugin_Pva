@@ -128,11 +128,11 @@ public:
     string_t providerName(parameters[1]);
     try{
       // Create object and append to "global" vector
-      ecmcPv* pv = new ecmcPv(&pvName[0],&providerName[0]);
-      pvVector.push_back(pv);      
+      ecmcPv* pv = new ecmcPv(&pvName[0],&providerName[0],pvVector.size()+1);
+      pvVector.push_back(pv);
     }    
     catch(std::exception &e){
-      std::cerr << "Error: " << e.what() << "\n";
+      std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYNC  "(): " << e.what() << "\n";
       return T(-1);
     }
     // return handle to object (1 higher than index to avoid 0)

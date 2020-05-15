@@ -21,10 +21,12 @@ extern "C" {
   // void* getPvGetObj();
   // void* getPvPutObj();
   void*  getPvRegObj();
-  double getData( double handle);
-  double putData( double handle, double data);
-  void   reset(   double handle);
-  double getError(double handle);
+  int    exeGetDataCmd(int handle);
+  int    exePutDataCmd(int handle, double data);
+  double getLastValue(int handle);
+  int    getBusy(int handle);
+  void   resetError(int handle);
+  int    getError(int handle);
 
 # ifdef __cplusplus
 }
