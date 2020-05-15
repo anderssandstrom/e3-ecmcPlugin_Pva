@@ -25,9 +25,9 @@
 #define ECMC_PV_PLC_CMD_PV_REG_ASYNC "pv_reg_async"
 #define ECMC_PV_PLC_CMD_PV_GET_ASYNC "pv_get_async"
 #define ECMC_PV_PLC_CMD_PV_PUT_ASYNC "pv_put_async"
-#define ECMC_PV_PLC_CMD_PV_GET_VALUE "pv_get_value"
-#define ECMC_PV_PLC_CMD_PV_GET_BUSY "pv_get_busy"
-#define ECMC_PV_PLC_CMD_PV_GET_ERR "pv_get_err"
-#define ECMC_PV_PLC_CMD_PV_RST_ERR "pv_rst_err"
+#define ECMC_PV_PLC_CMD_PV_GET_VALUE "pv_value"
+#define ECMC_PV_PLC_CMD_PV_GET_BUSY "pv_busy"
+#define ECMC_PV_PLC_CMD_PV_GET_ERR "pv_err"
+#define ECMC_PV_PLC_CMD_PV_RST_ERR "pv_rst"
 
 #endif  /* ECMC_PV_DEFS_H_ */

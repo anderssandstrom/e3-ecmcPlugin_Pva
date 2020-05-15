@@ -1,5 +1,25 @@
 ###############################################################################
 # Example of pv access fucntions in ecmcPlugin_Utils
+# The pvAccess commands can take "long" time, which can disturb the realtime
+# thread, and is therefore executed async in a separate thread.
+#
+# Workflow for a "pv_get()" operation:
+#  1: Regsiter PV with pv_reg_async() command (returns handle)
+#  2: Wait for pv_reg_async() to finish (pv_busy())
+#  3: Initiate async read command with pv_get_async())
+#  4: Wait for pv_get_async() to finish (pv_busy())
+#  5: Get last read value with pv_value().
+#  6: Goto 3 (read again)
+#
+# Workflow for a "pv_put()" operation:
+#  1: Regsiter PV with pv_reg_async() command (returns handle)
+#  2: Wait for pv_reg_async() to finish (pv_busy())
+#  3: Initiate async write command with pv_put_async())
+#  4: Wait for pv_put_async() to finish (pv_busy())
+#  5: Goto 3 (write again)
+#
+###############################################################################
+
 static.AI:=static.AI+1;
 var error:=0;
 
@@ -12,11 +32,13 @@ if(ioc_get_started() and static.aiHandle<=0) {
 
 # Read value of "IOC_TEST:AI" when registered
 if(static.aiHandle > 0) {
-  var retPvGet:=pv_get_value(static.aiHandle);
+  var retPvGet:=pv_value(static.aiHandle);
   # Start new read if not busy
-  if(not(pv_get_busy(static.aiHandle))) {
+  if(not(pv_busy(static.aiHandle))) {
     error:=pv_get_async(static.aiHandle);
-    println('Busy after pv_get_async(): ', pv_get_busy(static.aiHandle));
+    ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.aiHandle));
+  } else {
+    ${DBG=#}println('Still busy pv_get_async()...');
   };
   ${DBG=#}println('AI from PV:', retPvGet);
   ${DBG=#}println('AI in PLC :', static.AI);
@@ -32,9 +54,11 @@ if(ioc_get_started() and static.aoHandle<=0) {
 # Write value of "IOC_TEST:AO" when registered
 if(static.aoHandle > 0) {
   # Start new write if not busy
-  if(not(pv_get_busy(static.aoHandle))) {
+  if(not(pv_busy(static.aoHandle))) {
     error:=pv_put_async(static.aoHandle,static.AI);
-    println('Busy after pv_put_async(): ', pv_get_busy(static.aoHandle));
+    ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
+  }else {    
+    ${DBG=#}println('Still busy pv_put_async()...');
   }  
   ${DBG=#}println('AO to PV:', static.AI);
   ${DBG=#}println('AO from PV:', static.AO);

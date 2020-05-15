@@ -210,7 +210,7 @@ struct ecmcPluginData pluginDataDef = {
   .funcs[3] =
       { /*----pv_get_value----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_VALUE,
-        .funcDesc = "value = " ECMC_PV_PLC_CMD_PV_GET_VALUE "(<handle>) : Get result from last pv_get_async() cmd.",
+        .funcDesc = "value = " ECMC_PV_PLC_CMD_PV_GET_VALUE "(<handle>) : Get result from last pv_get_async() or pv_put_async() cmd.",
         .funcArg0 = NULL,
         .funcArg1 = pvaGetLastValue,
         .funcArg2 = NULL,

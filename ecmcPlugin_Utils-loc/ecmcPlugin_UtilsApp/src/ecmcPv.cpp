@@ -170,20 +170,20 @@ void ecmcPv::exeCmdThread() {
 
     switch(cmd_) {
       case ECMC_PV_CMD_GET:
-        //std::cerr << "Executing Get cmd for: " << name_ << "\n";
         try{
-          // Not working.. Need to revise..
-          valueLatestRead_ = getData_->getDouble();
+          valueLatestRead_ = pva_->channel(name_,providerName_)->getDouble();
+          //getData_ = get_->getData();
+          //valueLatestRead_ = getData_->getDouble();
         }
         catch(std::exception &e){
           errorCode_ = ECMC_PV_GET_ERROR;
         }
         break;
       case ECMC_PV_CMD_PUT:
-        //std::cerr << "Executing Put cmd for: " << name_ << "\n";
         try{
           putData_->putDouble(valueToWrite_);
           put_->put();
+          valueLatestRead_ = valueToWrite_;
         }
         catch(std::exception &e){
           errorCode_ = ECMC_PV_PUT_ERROR;
