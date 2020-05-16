@@ -129,7 +129,7 @@ void ecmcPv::exeCmdThread() {
   std::cerr << "Registering PV for: " << name_ << "\n";
   try{
     // Execute reg code here!
-    pva_        = PvaClient::get("pva ca");
+    pva_ = PvaClient::get("pva ca");
     pvaChannel_ = pva_->createChannel(name_,providerName_);
     pvaChannel_->issueConnect();
     Status status = pvaChannel_->waitConnect(1.0);
@@ -145,16 +145,8 @@ void ecmcPv::exeCmdThread() {
       throw std::runtime_error("Error: Failed create get to:" + name_);
     }
     getData_ = get_->getData();
-    //double value = getData_->getDouble();
-    //cout << "as double " << value << endl;
-    //cout << "__exampleDouble__ returning\n";
     put_ = pvaChannel_->put();
     putData_ = put_->getData();
-    // monitor_ = pva_->channel(pvName,providerName,2.0)->monitor("value");
-    // monitorData_ = monitor_->getData();
-    // provider_ = new pvac::ClientProvider(providerName_);
-    // channel_  = new pvac::ClientChannel(provider_->connect(name_));
-    // std::cout << channel_->name() << " : " << channel_->get()->getData()->getDouble() << "\n";    
   }
   catch(std::exception &e){
     std::cerr << "Error: " << e.what() << "\n";
@@ -172,8 +164,6 @@ void ecmcPv::exeCmdThread() {
       case ECMC_PV_CMD_GET:
         try{
           valueLatestRead_ = pva_->channel(name_,providerName_)->getDouble();
-          //getData_ = get_->getData();
-          //valueLatestRead_ = getData_->getDouble();
         }
         catch(std::exception &e){
           errorCode_ = ECMC_PV_GET_ERROR;
