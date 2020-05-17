@@ -46,8 +46,9 @@ APPDB:=$(APP)/Db
 APPSRC:=$(APP)/src
 
 USR_CFLAGS   += -shared -fPIC -Wall -Wextra
+USR_CPPFLAGS += -std=c++11
 USR_LDFLAGS  += -lstdc++
-USR_LDFLAGS  += -L/epics/base-7.0.3.1/lib/linux-arm/
+USR_LDFLAGS  += -L/epics/base-7.0.3.1/lib/$(EPICS_HOST_ARCH)
 USR_LDFLAGS  += -lpvaClient 
 USR_LDFLAGS  += -lpvAccess 
 USR_LDFLAGS  += -lpvAccessCA
