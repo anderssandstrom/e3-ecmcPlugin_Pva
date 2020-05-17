@@ -43,7 +43,7 @@ ecmcConfigOrDie "Cfg.SetSampleRate(${ECMC_EC_SAMPLE_RATE})"
 ########################################################################s######
 ## Load plugin: Utils
 epicsEnvSet(ECMC_PLUGIN_FILNAME,"/epics/base-7.0.3.1/require/3.1.2/siteMods/ecmcPlugin_Utils/master/lib/${EPICS_HOST_ARCH=linux-x86_64}/libecmcPlugin_Utils.so")
-${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG='${ECMC_PLUGIN_CONFIG="EMPTY"}', REPORT=1"
+${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG=EMPTY, REPORT=1"
 
 ##############################################################################
 ## PLC 0: Generate a sine wave at 10Hz
@@ -51,7 +51,7 @@ $(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=10,FILE=.
 
 ##############################################################################
 ## Load test records
-dbLoadRecords("example.db","P=$(IOC):,PORT=MC_CPU1,T_SMP_MS=1000")
+dbLoadRecords("example.db","P=$(IOC):,PORT=MC_CPU1,T_SMP_MS=1")
 
 ##############################################################################
 ############# Configure diagnostics:
