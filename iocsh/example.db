@@ -21,7 +21,7 @@ record(ao,"$(P)AO"){
 record(bi,"$(P)BI"){
   field(PINI, "1")    
   field(DTYP, "asynInt32")  
-  field(SCAN, "1 second")
+  field(SCAN, "I/O Intr")
   field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=0))CMD=FLOAT64TOINT32/T_SMP_MS=$(T_SMP_MS=1000)/TYPE=asynFloat64/plcs.plc0.static.BI?")
   field(ONAM, "One")
   field(ZNAM, "Zero")

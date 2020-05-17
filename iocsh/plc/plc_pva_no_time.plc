@@ -28,8 +28,11 @@ var error:=0;
 ####### READ PV IOC_TEST:AI ###################################################
 
 # Register pv IOC_TEST:AI when ecmc ioc has started
-if(ioc_get_started() and static.aiHandle<=0) {
+if(ioc_get_started() and static.aiHandle=0) {
   static.aiHandle:=pv_reg_async('IOC_TEST:AI','pva');
+  if(static.aiHandle < 0) {
+    ${DBG=#}println('Failed reg IOC_TEST:AI');
+  };
 };
 
 # Read value of "IOC_TEST:AI" when registered
@@ -49,8 +52,12 @@ if(static.aiHandle > 0) {
 ####### WRITE PV IOC_TEST:AO ##################################################
 
 # Register pv IOC_TEST:AO when ecmc ioc has started
-if(ioc_get_started() and static.aoHandle<=0) {
+if(ioc_get_started() and static.aoHandle=0) {
   static.aoHandle:=pv_reg_async('IOC_TEST:AO','pva');
+  if(static.aoHandle < 0) {
+    ${DBG=#}println('Failed reg IOC_TEST:AO');
+  };
+
 };
 
 # Write value of "IOC_TEST:AO" when registered
@@ -69,8 +76,11 @@ if(static.aoHandle > 0) {
 ####### READ PV IOC_TEST:BI ###################################################
 
 # Register pv IOC_TEST:BI when ecmc ioc has started
-if(ioc_get_started() and static.biHandle<=0) {
+if(ioc_get_started() and static.biHandle=0) {
   static.biHandle:=pv_reg_async('IOC_TEST:BI','pva');
+  if(static.biHandle < 0) {
+    ${DBG=#}println('Failed reg IOC_TEST:BI');
+  };
 };
 
 # Read value of "IOC_TEST:BI" when registered
@@ -90,8 +100,11 @@ if(static.biHandle > 0) {
 ####### WRITE PV IOC_TEST:BO ##################################################
 
 # Register pv IOC_TEST:BO when ecmc ioc has started
-if(ioc_get_started() and static.boHandle<=0) {
+if(ioc_get_started() and static.boHandle=0) {
   static.boHandle:=pv_reg_async('IOC_TEST:BO','pva');
+  if(static.boHandle < 0) {
+    ${DBG=#}println('Failed reg IOC_TEST:BO');
+  };
 };
 
 # Write value of "IOC_TEST:BO" when registered
