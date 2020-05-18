@@ -51,7 +51,7 @@ public:
     }    
     catch(std::exception &e){
       std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYNC  "(): " << e.what() << "\n";
-      return T(ECMC_PV_REG_ERROR);
+      return T(-ECMC_PV_REG_ERROR);
     }
     // return handle to object (1 higher than index to avoid 0)
     return pvVector.size();

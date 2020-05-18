@@ -45,7 +45,9 @@ class ecmcPv {
   void   exeCmdThread();
 
  private:
-
+ int    validateType();
+ double getDouble();
+ void   putDouble(double value);
  static std::string    to_string(int value);
 
   std::string           name_;
@@ -69,7 +71,7 @@ class ecmcPv {
   // Monitor
   PvaClientMonitorPtr monitor_;
   PvaClientMonitorDataPtr monitorData_;
-
+  Type                  type_;
   // Thread related
   epicsEvent            doCmdEvent_;
   int                   destructs_;

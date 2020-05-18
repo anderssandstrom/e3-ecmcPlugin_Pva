@@ -51,7 +51,7 @@ $(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=10,FILE=.
 
 ##############################################################################
 ## Load test records
-dbLoadRecords("example.db","P=$(IOC):,PORT=MC_CPU1,T_SMP_MS=1000")
+dbLoadRecords("./db/example.db","P=$(IOC):,PORT=MC_CPU1,T_SMP_MS=10")
 
 ##############################################################################
 ############# Configure diagnostics:
