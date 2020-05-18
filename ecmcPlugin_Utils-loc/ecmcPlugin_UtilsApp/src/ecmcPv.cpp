@@ -298,7 +298,9 @@ double ecmcPv::getDouble() {
     case structure:
       // Support enum BI/BO records
       //PVScalarPtr pvScalar(getData_->getPVStructure()->getSubField<PVScalar>("value.index"));
+      get_->get();
       pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");
+      
       if(pvScalar) {
         valueLatestRead_ = pvScalar->getAs<double>();
         return valueLatestRead_;
@@ -330,16 +332,17 @@ void ecmcPv::putDouble(double value) {
   PVScalarPtr pvScalar = NULL;
   switch(type_) {
     case scalar:
-      getData_->putDouble(value);
-      get_->put();      
+      putData_->putDouble(value);
+      put_->put();      
       break;
 
     case structure:
       // Support enum BI/BO records
       //PVScalarPtr pvScalar(getData_->getPVStructure()->getSubField<PVScalar>("value.index"));
-      pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");
+      pvScalar = putData_->getPVStructure()->getSubField<PVScalar>("value.index");
       if(pvScalar) {
         pvScalar->putFrom<double>(value);
+        put_->put();
         valueLatestRead_ = value;
       } else {
         errorCode_ = ECMC_PV_GET_ERROR;        
