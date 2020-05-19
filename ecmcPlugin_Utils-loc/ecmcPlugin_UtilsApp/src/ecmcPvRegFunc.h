@@ -44,16 +44,43 @@ public:
 
     string_t pvName(parameters[0]);
     string_t providerName(parameters[1]);
+    std::string pvNameStr(&pvName[0]);
+    std::string providerNameStr(&providerName[0]);
+    
+    int index = -1;
+
     try{
       // Create object and append to "global" vector
-      ecmcPv* pv = new ecmcPv(&pvName[0],&providerName[0],pvVector.size()+1);
-      pvVector.push_back(pv);
+      ecmcPv* pv = new ecmcPv(pvNameStr.c_str(),providerNameStr.c_str(),pvVector.size()+1);
+      
+      //check if pv, provider combo already exist.. then erase and replace with new
+      
+      for(unsigned int i = 0; i < pvVector.size(); ++i) {
+        if(pvVector.at(i)->getPvName() == pvNameStr && 
+           pvVector.at(i)->getProvider() == providerNameStr) {
+          ecmcPv* pvTemp = pvVector.at(i);
+          pvVector.at(i) = NULL;
+          delete pvTemp;
+          index = i;
+          break;
+        }
+      }
+
+      // return handle to object (1 higher than index to avoid 0)
+
+      if(index>=0) {             // replace object
+        pvVector.at(index) = pv; 
+        return index + 1;        // Start count handles from 1
+      } else {                   // Add
+        pvVector.push_back(pv);  
+        return pvVector.size();
+      }
     }    
     catch(std::exception &e){
       std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYNC  "(): " << e.what() << "\n";
       return T(-ECMC_PV_REG_ERROR);
     }
-    // return handle to object (1 higher than index to avoid 0)
-    return pvVector.size();
+    
+    return -ECMC_PV_REG_ERROR;
   }
 };

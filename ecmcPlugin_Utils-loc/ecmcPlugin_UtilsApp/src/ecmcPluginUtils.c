@@ -67,6 +67,7 @@ int pvaConstruct(char *configStr)
  **/
 void pvaDestruct(void)
 {
+  cleanup();
   if(lastConfStr){
     free(lastConfStr);
   }

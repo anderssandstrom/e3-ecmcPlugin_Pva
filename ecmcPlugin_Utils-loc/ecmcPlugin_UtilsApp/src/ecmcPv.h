@@ -38,17 +38,24 @@ class ecmcPv {
   ~ecmcPv();
   int    getError();
   int    reset();
-  void   get();
-  void   put(double value);
+
+  // Async Commads
+  void   getCmd();
+  void   putCmd(double value);
+  void   regCmd();
+
   double getLastReadValue();
   bool   busy();
   void   exeCmdThread();
+  std::string getPvName();
+  std::string getProvider();
 
  private:
  int    validateType();
  double getDouble();
  void   putDouble(double value);
  static std::string    to_string(int value);
+ int    connect();
 
   std::string           name_;
   std::string           providerName_;
@@ -81,6 +88,7 @@ class ecmcPv {
   int                   index_;
   double                valueLatestRead_;
   double                valueToWrite_;
+  bool                  connected_;
 };
 
 #endif  /* ECMC_PV_H_ */

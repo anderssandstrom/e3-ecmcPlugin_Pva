@@ -27,6 +27,7 @@ extern "C" {
   int    getBusy(int handle);
   void   resetError(int handle);
   int    getError(int handle);
+  void   cleanup();
 
 # ifdef __cplusplus
 }

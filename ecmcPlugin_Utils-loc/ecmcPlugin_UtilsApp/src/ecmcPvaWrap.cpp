@@ -18,8 +18,11 @@
 #include "ecmcPvaWrap.h"
 #include "ecmcPvRegFunc.h"
 
+pvreg<double>*  pvRegObj;
+
 void* getPvRegObj() {
-  return (void*) new pvreg<double>();
+  pvRegObj = new pvreg<double>();
+  return (void*) pvRegObj;
 }
 
 void resetError(int handle) {
@@ -47,7 +50,7 @@ int getError(int handle) {
 // Normal plc functions
 int exeGetDataCmd(int handle) {
   try{
-    pvVector.at(handle-1)->get();
+    pvVector.at(handle-1)->getCmd();
     return 0;
   }    
   catch(std::exception &e){
@@ -60,7 +63,7 @@ int exeGetDataCmd(int handle) {
 // Normal plc functions
 int exePutDataCmd(int handle, double value) {
   try{
-    pvVector.at(handle-1)->put(value);
+    pvVector.at(handle-1)->putCmd(value);
     return 0;
   }    
   catch(std::exception &e){
@@ -90,4 +93,15 @@ int getBusy(int handle) {
     return 0;
   }
   return 0;
+}
+
+void cleanup() {
+ try{
+    pvVector.clear();
+    delete pvRegObj;
+  }    
+  catch(std::exception &e){
+    std::cerr << "Error: Destruct(): "<< e.what() << "\n";
+    return;
+  }
 }
