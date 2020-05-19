@@ -145,6 +145,7 @@ bool ecmcPv::busy() {
 
 void ecmcPv::exeCmdThread() {
   std::cerr << "Registering PV for: " << name_ << "\n";
+  
   connect();
 
   while(true) {

@@ -18,8 +18,6 @@
 extern "C" {
 # endif  // ifdef __cplusplus
 
-  // void* getPvGetObj();
-  // void* getPvPutObj();
   void*  getPvRegObj();
   int    exeGetDataCmd(int handle);
   int    exePutDataCmd(int handle, double data);

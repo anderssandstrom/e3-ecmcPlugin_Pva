@@ -47,7 +47,7 @@ ${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILN
 
 ##############################################################################
 ## PLC 0: Generate a sine wave at 10Hz
-$(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=10,FILE=./plc/plc_pva_no_time.plc, PLC_MACROS='DBG=,PLC_ID=0,DBG='")
+$(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=10,FILE=./plc/plc_pva_no_time.plc, PLC_MACROS='DBG=#,PLC_ID=0'")
 
 ##############################################################################
 ## Load test records
