@@ -50,6 +50,12 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
   type_            = scalar;
   connected_       = false;
 
+  // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
+  ecmcGetValMutex_ = epicsMutexCreate();
+  if(!ecmcGetValMutex_) {
+    throw std::runtime_error("Error: Create Mutex failed.");
+  }
+
   // Create worker thread
   std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
   cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
@@ -69,6 +75,7 @@ ecmcPv::~ecmcPv() {
   doCmdEvent_.signal();
   destructs_ = 1;
   epicsThreadMustJoin(cmdExeThread_);
+  epicsThreadMustJoin(monThread_);
 }
 
 std::string ecmcPv::getPvName(){
@@ -108,7 +115,10 @@ void ecmcPv::getCmd() {
 }
 
 double ecmcPv::getLastReadValue() {
-  return valueLatestRead_;
+  epicsMutexLock(ecmcGetValMutex_);
+  double retVal=valueLatestRead_;
+  epicsMutexUnlock(ecmcGetValMutex_);
+  return retVal;
 }
 
 // Send Reg cmd to worker
@@ -182,14 +192,16 @@ void ecmcPv::exeCmdThread() {
     doCmdEvent_.wait();
     reset();
     if(destructs_) {
-      break; 
+      return; 
     }
 
     switch(cmd_) {
       case ECMC_PV_CMD_GET:
         try{
           if(connected_) {
-            valueLatestRead_=getDouble();
+            epicsMutexLock(ecmcGetValMutex_);
+            valueLatestRead_ = getDouble();
+            epicsMutexUnlock(ecmcGetValMutex_);                        
           }else {
             errorCode_ = ECMC_PV_REG_ERROR;
           }
@@ -201,7 +213,7 @@ void ecmcPv::exeCmdThread() {
       case ECMC_PV_CMD_PUT:
         try{
           if(connected_) {
-            putDouble(valueToWrite_);
+            putDouble(valueToWrite_);            
           }else {
             errorCode_ = ECMC_PV_REG_ERROR;
           }
@@ -224,51 +236,60 @@ void ecmcPv::exeCmdThread() {
   } 
 }
 
+ // Monitor thread
 void ecmcPv::monitorThread() {
 
-  //  cout << "__exampleDouble recordName " << recordName << " provider " << provider << "__\n";
-  //   PvaClientMonitorPtr monitor = pva->channel(recordName,provider,2.0)->monitor("");
-  //   PvaClientMonitorDataPtr monitorData = monitor->getData();
-    
-  //   PvaClientPutPtr put = pva->channel(recordName,provider,2.0)->put("");
-  //   PvaClientPutDataPtr putData = put->getData();
-  //   for(size_t ntimes=0; ntimes<5; ++ntimes)
-  //   {
-  //        double value = ntimes;
-  //        cout << "put " << value << endl;
-  //        putData->putDouble(value); put->put();
-  //        if(!monitor->waitEvent(.1)) {
-  //              cout << "waitEvent returned false. Why???";
-  //              continue;
-  //        } else while(true) {
-  //            cout << "monitor " << monitorData->getDouble() << endl;
-  //            cout << "changed\n";
-  //            monitorData->showChanged(cout);
-  //            cout << "overrun\n";
-  //            monitorData->showOverrun(cout);
-  //            monitor->releaseEvent();
-  //            if(!monitor->poll()) break;
-  //        }
-  //    }
+  PVScalarPtr pvScalar = NULL;
+  double retValue = 0;
   while(true) {
     if(destructs_) {
-      break; 
+      return; 
     }
     if(!connected_) {
+      epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
       continue;
     }
-    if(!monitor_->waitEvent(.1)) {
-      cout << "waitEvent returned false. Why???";
-      continue;
-    } else while(true) {
-      cout << "monitor " << monitorData_->getDouble() << endl;
-      cout << "changed\n";
-      monitorData_->showChanged(cout);
-      cout << "overrun\n";
-      monitorData_->showOverrun(cout);
-      monitor_->releaseEvent();
-      if(!monitor_->poll()) break;
-     }
+
+    if(monitor_->waitEvent(0.1)) {
+      while(true) {
+
+        retValue = 0;        
+        if(destructs_) {
+          return; 
+        }
+
+        switch(type_) {
+          case scalar: 
+            retValue = monitorData_->getDouble();
+            break;
+
+          case structure:
+            pvScalar = monitorData_->getPVStructure()->getSubField<PVScalar>("value.index");      
+            if(pvScalar) {
+              retValue = pvScalar->getAs<double>();
+            } else {
+              errorCode_ = ECMC_PV_MON_ERROR;
+            }
+            break;
+
+          default:
+            errorCode_ = ECMC_PV_MON_ERROR;
+            break;
+        }
+
+        epicsMutexLock(ecmcGetValMutex_);
+        valueLatestRead_ = retValue;
+        epicsMutexUnlock(ecmcGetValMutex_);
+
+        //printf("pv: %s, new value = %lf\n",name_.c_str(),valueLatestRead_);
+        //cout << "changed\n";
+        //monitorData_->showChanged(cout);
+        //cout << "overrun\n";
+        //monitorData_->showOverrun(cout);
+        monitor_->releaseEvent();
+        if(!monitor_->poll()) break;
+      }
+    }
   }
 }
 
@@ -320,13 +341,12 @@ int ecmcPv::connect() {
 }
 
 double ecmcPv::getDouble() {
-
+  double retVal = 0;
   PVScalarPtr pvScalar = NULL;
   switch(type_) {
     case scalar:
       // Scalar types are normal AI/AO VAL fields
-      valueLatestRead_ = pva_->channel(name_,providerName_)->getDouble();
-      return valueLatestRead_;
+      retVal = pva_->channel(name_,providerName_)->getDouble();      
       break;
 
     case structure:
@@ -334,8 +354,7 @@ double ecmcPv::getDouble() {
       get_->get();
       pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");      
       if(pvScalar) {
-        valueLatestRead_ = pvScalar->getAs<double>();
-        return valueLatestRead_;
+        retVal = pvScalar->getAs<double>();        
       } else {
         errorCode_ = ECMC_PV_GET_ERROR;
         return 0;
@@ -354,11 +373,10 @@ double ecmcPv::getDouble() {
       break;
 
   }
-
+  
   errorCode_ = ECMC_PV_GET_ERROR;
-  return 0;
+  return retVal;
 }
-
 
 void ecmcPv::putDouble(double value) {
 
@@ -370,26 +388,28 @@ void ecmcPv::putDouble(double value) {
       break;
 
     case structure:
-      // Support enum BI/BO records
-      //PVScalarPtr pvScalar(getData_->getPVStructure()->getSubField<PVScalar>("value.index"));
+      // Support enum BI/BO records      
       pvScalar = putData_->getPVStructure()->getSubField<PVScalar>("value.index");
       if(pvScalar) {
         pvScalar->putFrom<double>(value);
-        put_->put();
-        valueLatestRead_ = value;
+        put_->put();        
       } else {
-        errorCode_ = ECMC_PV_GET_ERROR;        
+        errorCode_ = ECMC_PV_GET_ERROR;
+        return;
       }
       break;
 
     case scalarArray:
       errorCode_ = ECMC_PV_GET_ERROR; 
+      return;
       break;
 
     default:
       errorCode_ = ECMC_PV_GET_ERROR;
+      return;
       break;
   }
+
   return;
 }
 
@@ -442,76 +462,3 @@ std::string ecmcPv::to_string(int value) {
   os << value;
   return os.str();
 }
-
-
-//    if(getData_->isValueScalar()) {
-//      use get/setDoube()
-//    }
-
-/*
-
-Type type(field->getType());
-    if(type==scalar) {
-        PVScalarPtr pvScalar(std::tr1::static_pointer_cast<PVScalar>(pvField));
-        getConvert()->fromString(pvScalar,value);
-        bitSet->set(pvField->getFieldOffset());
-        channelPut->put(pvStructure,bitSet);
-        return;
-    }
-    if(type==scalarArray) {
-        PVScalarArrayPtr pvScalarArray(std::tr1::static_pointer_cast<PVScalarArray>(pvField));
-        std::vector<string> values;
-        size_t pos = 0;
-        size_t n = 1;
-        while(true)
-        {
-            size_t offset = value.find(" ",pos);
-            if(offset==string::npos) {
-                values.push_back(value.substr(pos));
-                break;
-            }
-            values.push_back(value.substr(pos,offset-pos));
-            pos = offset+1;
-            n++;    
-        }
-        pvScalarArray->setLength(n);
-        getConvert()->fromStringArray(pvScalarArray,0,n,values,0);       
-        bitSet->set(pvField->getFieldOffset());
-        channelPut->put(pvStructure,bitSet);
-        return;
-    }
-    if(type==structure) {
-       PVScalarPtr pvScalar(pvStructure->getSubField<PVScalar>("value.index"));
-       if(pvScalar) {
-          getConvert()->fromString(pvScalar,value);
-          bitSet->set(pvScalar->getFieldOffset());
-          channelPut->put(pvStructure,bitSet);
-          return;
-       }
-    }
-
-void PvaClientData::setData(
-    PVStructurePtr const & pvStructureFrom,
-    BitSetPtr const & bitSetFrom)
-{
-   if(PvaClient::getDebug()) cout << "PvaClientData::setData\n";
-   pvStructure = pvStructureFrom;
-   bitSet = bitSetFrom;
-   pvValue = pvStructure->getSubField("value");
-}ECMC_PV_TIME_BETWEEN_RECONNECT
-
-bool PvaClientData::hasValue()
-{
-    if(PvaClient::getDebug()) cout << "PvaClientData::hasValue\n";
-    if(!pvValue) return false;
-    return true;
-}
-
-bool PvaClientData::isValueScalar()
-{
-    if(PvaClient::getDebug()) cout << "PvaClientData::isValueScalar\n";
-    if(!pvValue) return false;
-    if(pvValue->getField()->getType()==scalar) return true;
-    return false;
-}
-*/

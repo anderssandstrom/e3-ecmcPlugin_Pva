@@ -20,6 +20,7 @@
 #include "ecmcPvDefs.h"
 #include "ecmcPluginClient.h"
 #include "epicsThread.h"
+#include "epicsMutex.h"
 
 using namespace std;
 using namespace epics::pvData;
@@ -96,6 +97,7 @@ class ecmcPv {
   bool                  connected_;
   epicsThreadId         cmdExeThread_;
   epicsThreadId         monThread_;
+  epicsMutexId          ecmcGetValMutex_;
   
 };
 
