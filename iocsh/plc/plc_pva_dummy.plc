@@ -3,13 +3,11 @@
 # The pvAccess commands can take "long" time, which can disturb the realtime
 # thread, and is therefore executed async in a separate thread.
 #
-# Workflow for a "pv_get()" operation:
+# Workflow for a "pv_get()" operation: (update automatically from monitor)
 #  1: Regsiter PV with pv_reg_async() command (returns handle)
-#  2: Wait for pv_reg_async() to finish (pv_busy())
-#  3: Initiate async read command with pv_get_async())
-#  4: Wait for pv_get_async() to finish (pv_busy())
-#  5: Get last read value with pv_value().
-#  6: Goto 3 (read again)
+#  2: Wait for pv_reg_async() to finish (pv_busy(), pv_conencted())
+#  3: Get last read value with pv_value().
+#  4: Goto 3 (read again)
 #
 # Workflow for a "pv_put()" operation:
 #  1: Regsiter PV with pv_reg_async() command (returns handle)
@@ -20,7 +18,7 @@
 #
 ###############################################################################
 
-static.AI:=static.AI+1;
+static.AO:=static.AO+1;
 
 var error:=0;
 
@@ -42,8 +40,7 @@ if(static.aiHandle > 0) {
   if(pv_connected(static.aiHandle)) {
     # Value auto update by monitor.
     var retPvGet:=pv_value(static.aiHandle);    
-    ${DBG=#}println('AI from PV:', retPvGet);
-    ${DBG=#}println('AI in PLC :', static.AI);
+    ${DBG=#}println('Get AI from PV:', retPvGet);
   };
 };
 
@@ -65,13 +62,12 @@ if(static.aoHandle > 0) {
   if(pv_connected(static.aoHandle)) {
     # Start new write if not busy
     if(not(pv_busy(static.aoHandle))) {
-      error:=pv_put_async(static.aoHandle,static.AI);
+      error:=pv_put_async(static.aoHandle,static.AO);
+      ${DBG=#}println('Put AO to PV  :', static.AO);
       ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
     }else {    
       ${DBG=#}println('Still busy pv_put_async()...');
-    }  
-    ${DBG=#}println('AO to PV  :', static.AI);
-    ${DBG=#}println('AO from PV:', static.AO);
+    }      
   };
 };
 
@@ -92,8 +88,7 @@ if(ioc_get_started() and static.biHandle=0) {
 if(static.biHandle > 0) {
   if(pv_connected(static.biHandle)) {
     var retPvBIGet:=pv_value(static.biHandle);
-    ${DBG=#}println('BI from PV:', retPvBIGet);
-    ${DBG=#}println('BI in PLC :', static.BI);
+    ${DBG=#}println('Get BI from PV:', retPvBIGet);    
   };
 };
 
@@ -115,13 +110,12 @@ if(static.boHandle > 0) {
   if(pv_connected(static.boHandle)) {
     # Start new write if not busy
     if(not(pv_busy(static.boHandle))) {
-      static.BI:=not(static.BI);
-      error:=pv_put_async(static.boHandle,static.BI);
+      static.BO:=not(static.BO);
+      error:=pv_put_async(static.boHandle,static.BO);
+      ${DBG=#}println('Put BO to PV  :', static.BO);    
       ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.boHandle), ', err: ', pv_err(static.boHandle));
     }else {    
       ${DBG=#}println('Still busy pv_put_async()...');
-    }  
-    ${DBG=#}println('BO to PV  :', static.BI);
-    ${DBG=#}println('BO from PV:', static.BO);
+    }
   };
 };

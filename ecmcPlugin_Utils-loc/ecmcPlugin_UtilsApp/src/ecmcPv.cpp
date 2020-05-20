@@ -249,47 +249,51 @@ void ecmcPv::monitorThread() {
       epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
       continue;
     }
-
-    if(monitor_->waitEvent(0.1)) {
-      while(true) {
-
-        retValue = 0;        
-        if(destructs_) {
-          return; 
-        }
-
-        switch(type_) {
-          case scalar: 
-            retValue = monitorData_->getDouble();
-            break;
-
-          case structure:
-            pvScalar = monitorData_->getPVStructure()->getSubField<PVScalar>("value.index");      
-            if(pvScalar) {
-              retValue = pvScalar->getAs<double>();
-            } else {
+//    try{
+      if(monitor_->waitEvent(0.1)) {
+        while(true) {
+  
+          retValue = 0;        
+          if(destructs_) {
+            return; 
+          }
+  
+          switch(type_) {
+            case scalar: 
+              retValue = monitorData_->getDouble();
+              break;
+  
+            case structure:
+              pvScalar = monitorData_->getPVStructure()->getSubField<PVScalar>("value.index");      
+              if(pvScalar) {
+                retValue = pvScalar->getAs<double>();
+              } else {
+                errorCode_ = ECMC_PV_MON_ERROR;
+              }
+              break;
+  
+            default:
               errorCode_ = ECMC_PV_MON_ERROR;
-            }
-            break;
-
-          default:
-            errorCode_ = ECMC_PV_MON_ERROR;
-            break;
+              break;
+          }
+  
+          epicsMutexLock(ecmcGetValMutex_);
+          valueLatestRead_ = retValue;
+          epicsMutexUnlock(ecmcGetValMutex_);
+  
+          //printf("pv: %s, new value = %lf\n",name_.c_str(),valueLatestRead_);
+          //cout << "changed\n";
+          //monitorData_->showChanged(cout);
+          //cout << "overrun\n";
+          //monitorData_->showOverrun(cout);
+          monitor_->releaseEvent();
+          if(!monitor_->poll()) break;
         }
-
-        epicsMutexLock(ecmcGetValMutex_);
-        valueLatestRead_ = retValue;
-        epicsMutexUnlock(ecmcGetValMutex_);
-
-        //printf("pv: %s, new value = %lf\n",name_.c_str(),valueLatestRead_);
-        //cout << "changed\n";
-        //monitorData_->showChanged(cout);
-        //cout << "overrun\n";
-        //monitorData_->showOverrun(cout);
-        monitor_->releaseEvent();
-        if(!monitor_->poll()) break;
       }
-    }
+    // } 
+    // catch(std::exception &e){
+    //   std::cerr << "Error: IN MONITOR THREAD..";
+    // }
   }
 }
 
