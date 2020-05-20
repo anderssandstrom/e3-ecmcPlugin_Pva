@@ -49,6 +49,7 @@ class ecmcPv {
   bool   busy();
   bool   connected();
   void   exeCmdThread();
+  void   monitorThread();
   std::string getPvName();
   std::string getProvider();
 
@@ -80,6 +81,7 @@ class ecmcPv {
   // Monitor
   PvaClientMonitorPtr monitor_;
   PvaClientMonitorDataPtr monitorData_;
+  
   Type                  type_;
   // Thread related
   epicsEvent            doCmdEvent_;
@@ -93,6 +95,7 @@ class ecmcPv {
   double                valueToWrite_;
   bool                  connected_;
   epicsThreadId         cmdExeThread_;
+  epicsThreadId         monThread_;
   
 };
 

@@ -13,7 +13,7 @@
 #include <sstream>
 
 // Start worker threads for each object
-void f_worker(void *obj) {
+void f_cmd_exe(void *obj) {
   if(!obj) {
     printf("%s/%s:%d: Error: Worker thread PV object NULL..\n",
             __FILE__, __FUNCTION__, __LINE__);
@@ -22,6 +22,18 @@ void f_worker(void *obj) {
 
   ecmcPv * pvObj = (ecmcPv*)obj;
   pvObj->exeCmdThread();
+}
+
+// Start monitor thread
+void f_monitor(void *obj) {
+  if(!obj) {
+    printf("%s/%s:%d: Error: Worker thread PV object NULL..\n",
+            __FILE__, __FUNCTION__, __LINE__);
+    return;
+  }
+
+  ecmcPv * pvObj = (ecmcPv*)obj;
+  pvObj->monitorThread();
 }
 
 ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
@@ -39,10 +51,17 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
   connected_       = false;
 
   // Create worker thread
-  std::string threadname = "ecmc.plg.utls.pv_"  + to_string(index_);
-  cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_worker, this);
+  std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
+  cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
   if( cmdExeThread_ == NULL) {
-    throw std::runtime_error("Error: Failed create worker thread.");
+    throw std::runtime_error("Error: Failed cmd exe worker thread.");
+  } 
+
+  // Create monitor thread
+  threadname = "ecmc.mon.pv" + to_string(index_);
+  monThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_monitor, this);
+  if( monThread_ == NULL) {
+    throw std::runtime_error("Error: Failed create monitor worker thread.");
   }
 }
 
@@ -158,7 +177,6 @@ void ecmcPv::exeCmdThread() {
   }
 
   // Now connected
-
   while(true) {
     busyLock_.clear();
     doCmdEvent_.wait();
@@ -206,10 +224,60 @@ void ecmcPv::exeCmdThread() {
   } 
 }
 
+void ecmcPv::monitorThread() {
+
+  //  cout << "__exampleDouble recordName " << recordName << " provider " << provider << "__\n";
+  //   PvaClientMonitorPtr monitor = pva->channel(recordName,provider,2.0)->monitor("");
+  //   PvaClientMonitorDataPtr monitorData = monitor->getData();
+    
+  //   PvaClientPutPtr put = pva->channel(recordName,provider,2.0)->put("");
+  //   PvaClientPutDataPtr putData = put->getData();
+  //   for(size_t ntimes=0; ntimes<5; ++ntimes)
+  //   {
+  //        double value = ntimes;
+  //        cout << "put " << value << endl;
+  //        putData->putDouble(value); put->put();
+  //        if(!monitor->waitEvent(.1)) {
+  //              cout << "waitEvent returned false. Why???";
+  //              continue;
+  //        } else while(true) {
+  //            cout << "monitor " << monitorData->getDouble() << endl;
+  //            cout << "changed\n";
+  //            monitorData->showChanged(cout);
+  //            cout << "overrun\n";
+  //            monitorData->showOverrun(cout);
+  //            monitor->releaseEvent();
+  //            if(!monitor->poll()) break;
+  //        }
+  //    }
+  while(true) {
+    if(destructs_) {
+      break; 
+    }
+    if(!connected_) {
+      continue;
+    }
+    if(!monitor_->waitEvent(.1)) {
+      cout << "waitEvent returned false. Why???";
+      continue;
+    } else while(true) {
+      cout << "monitor " << monitorData_->getDouble() << endl;
+      cout << "changed\n";
+      monitorData_->showChanged(cout);
+      cout << "overrun\n";
+      monitorData_->showOverrun(cout);
+      monitor_->releaseEvent();
+      if(!monitor_->poll()) break;
+     }
+  }
+}
+
 int ecmcPv::connect() {
 
   pva_ = PvaClient::get("pva ca");
   pvaChannel_ = pva_->createChannel(name_,providerName_);
+  monitor_ = pva_->channel(name_,providerName_,2.0)->monitor("");
+  monitorData_ = monitor_->getData();
   pvaChannel_->issueConnect();
   Status status = pvaChannel_->waitConnect(1.0);
   if(!status.isOK()) {
