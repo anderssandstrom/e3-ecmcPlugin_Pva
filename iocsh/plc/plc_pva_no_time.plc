@@ -38,7 +38,7 @@ if(ioc_get_started() and static.aiHandle=0) {
   };
 };
 
-# Read value of "IOC_TEST:AI" when registered
+# Read value of "IOC_TEST:AI" when registered (auto updates via monitor)
 if(static.aiHandle > 0) {
   if(pv_connected(static.aiHandle)) {
     # Value auto update by monitor.
@@ -89,17 +89,10 @@ if(ioc_get_started() and static.biHandle=0) {
   };  
 };
 
-# Read value of "IOC_TEST:BI" when registered
+# Read value of "IOC_TEST:BI" when registered (auto updates via monitor)
 if(static.biHandle > 0) {
   if(pv_connected(static.biHandle)) {
     var retPvBIGet:=pv_value(static.biHandle);
-    # Start new read if not busy
-    if(not(pv_busy(static.biHandle))) {
-      error:=pv_get_async(static.biHandle);
-      ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.biHandle), ', err: ', pv_err(static.biHandle));
-    } else {
-      ${DBG=#}println('Still busy pv_get_async()...');
-    };
     ${DBG=#}println('BI from PV:', retPvBIGet);
     ${DBG=#}println('BI in PLC :', static.BI);
   };
