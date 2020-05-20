@@ -19,6 +19,7 @@
 #include <pv/convert.h>
 #include "ecmcPvDefs.h"
 #include "ecmcPluginClient.h"
+#include "epicsThread.h"
 
 using namespace std;
 using namespace epics::pvData;
@@ -46,6 +47,7 @@ class ecmcPv {
 
   double getLastReadValue();
   bool   busy();
+  bool   connected();
   void   exeCmdThread();
   std::string getPvName();
   std::string getProvider();
@@ -86,9 +88,12 @@ class ecmcPv {
   std::atomic_flag      busyLock_;  
 
   int                   index_;
+  int                   reconnectCounter_;
   double                valueLatestRead_;
   double                valueToWrite_;
   bool                  connected_;
+  epicsThreadId         cmdExeThread_;
+  
 };
 
 #endif  /* ECMC_PV_H_ */

@@ -11,7 +11,6 @@
 \*************************************************************************/
 #include "ecmcPv.h"
 #include <sstream>
-#include "epicsThread.h"
 
 // Start worker threads for each object
 void f_worker(void *obj) {
@@ -38,9 +37,11 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
   valueToWrite_    = 0;
   type_            = scalar;
   connected_       = false;
+
   // Create worker thread
-  std::string threadname = "ecmc.plugin.utils.pva_"  + to_string(index_);
-  if(epicsThreadCreate(threadname.c_str(), 0, 32768, f_worker, this) == NULL) {
+  std::string threadname = "ecmc.plg.utls.pv_"  + to_string(index_);
+  cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_worker, this);
+  if( cmdExeThread_ == NULL) {
     throw std::runtime_error("Error: Failed create worker thread.");
   }
 }
@@ -48,6 +49,7 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
 ecmcPv::~ecmcPv() {
   doCmdEvent_.signal();
   destructs_ = 1;
+  epicsThreadMustJoin(cmdExeThread_);
 }
 
 std::string ecmcPv::getPvName(){
@@ -118,17 +120,10 @@ void ecmcPv::putCmd(double value) {
   
   cmd_ =  ECMC_PV_CMD_PUT;
   valueToWrite_ = value;
+
   // Execute cmd
   doCmdEvent_.signal();
 
-  // try{
-  //   putData_->putDouble(value);
-  //   put_->put();
-  // }
-  // catch(std::exception &e){
-  //   errorCode_ = ECMC_PV_PUT_ERROR;
-  //   std::cerr << "Error: " << e.what() << errorCode_ << ", " << "\n";
-  // }
   return;
 }
 
@@ -143,10 +138,26 @@ bool ecmcPv::busy() {
   }  
 }
 
+bool ecmcPv::connected() {
+  return connected_;
+}
+
 void ecmcPv::exeCmdThread() {
   std::cerr << "Registering PV for: " << name_ << "\n";
-  
-  connect();
+  // Retry untill success..
+  while(not connected_) {
+    try{
+      connect();      
+    }
+    catch(std::exception &e){
+      std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
+                << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
+      errorCode_ = ECMC_PV_REG_ERROR;
+      epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
+    }
+  }
+
+  // Now connected
 
   while(true) {
     busyLock_.clear();
@@ -196,52 +207,46 @@ void ecmcPv::exeCmdThread() {
 }
 
 int ecmcPv::connect() {
-  std::cerr << "Registering PV for: " << name_ << "\n";
-  try{
-    // Execute reg code here!
-    pva_ = PvaClient::get("pva ca");
-    pvaChannel_ = pva_->createChannel(name_,providerName_);
-    pvaChannel_->issueConnect();
-    Status status = pvaChannel_->waitConnect(1.0);
-    if(!status.isOK()) {
-      cout << "Error: connect failed\n";
-      errorCode_ = ECMC_PV_REG_ERROR;
-      throw std::runtime_error("Error: Failed connect to:" + name_);
-    }
-    get_ = pvaChannel_->createGet();
-    get_->issueConnect();
-    status = get_->waitConnect();
-    if(!status.isOK()) {
-      cout << "Error: createGet failed\n";
-      errorCode_ = ECMC_PV_REG_ERROR;
-      throw std::runtime_error("Error: Failed create get to:" + name_);
-    }
-    getData_ = get_->getData();
-    printf("Get Data has value: %d, isValueScalar %d\n", getData_->hasValue(),getData_->isValueScalar());
-    put_ = pvaChannel_->put();
-    putData_ = put_->getData();
-    printf("Put Data has value: %d, isScalarArray %d\n", putData_->hasValue(),getData_->isValueScalarArray());
-    cout << "getData_->getvalue(): " << getData_->getValue()<< "\n";
-    //cout << "getData_->getString(): " << getData_->getString()<< "\n";
-    cout << "getData_->getPVStructure(): " << getData_->getPVStructure()<< "\n";
-    cout << "getData_->getStructure(): " << getData_->getStructure()<< "\n";
-    cout << "getData_->getValue()->getField()->getType(): " << getData_->getValue()->getField()->getType() << "\n";
-    cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
-  
-    //cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
-    
-    type_ = getData_->getValue()->getField()->getType();
-    if(!validateType()) {
-      cout << "Error: Type not supported for PV: " + name_ +"\n";
-      errorCode_ = ECMC_PV_TYPE_NOT_SUPPORTED;
-      throw std::runtime_error("Error: Type not supported for PV: " + name_);
-    }
+
+  pva_ = PvaClient::get("pva ca");
+  pvaChannel_ = pva_->createChannel(name_,providerName_);
+  pvaChannel_->issueConnect();
+  Status status = pvaChannel_->waitConnect(1.0);
+  if(!status.isOK()) {
+    cout << "Error: connect failed\n";
+    errorCode_ = ECMC_PV_REG_ERROR;
+    throw std::runtime_error("Error: Failed connect to:" + name_);
   }
-  catch(std::exception &e){
-    std::cerr << "Error: " << e.what() << "\n";
-    errorCode_ = ECMC_PV_PUT_ERROR;
-    return errorCode_;
+  get_ = pvaChannel_->createGet();
+  get_->issueConnect();
+  status = get_->waitConnect();
+  if(!status.isOK()) {
+    cout << "Error: createGet failed\n";
+    errorCode_ = ECMC_PV_REG_ERROR;
+    throw std::runtime_error("Error: Failed create get to:" + name_);
   }
+  getData_ = get_->getData();
+  //printf("Get Data has value: %d, isValueScalar %d\n", getData_->hasValue(),getData_->isValueScalar());
+  put_ = pvaChannel_->put();
+  putData_ = put_->getData();
+
+  //printf("Put Data has value: %d, isScalarArray %d\n", putData_->hasValue(),getData_->isValueScalarArray());
+  //cout << "getData_->getvalue(): " << getData_->getValue()<< "\n";
+  //cout << "getData_->getString(): " << getData_->getString()<< "\n";
+  //cout << "getData_->getPVStructure(): " << getData_->getPVStructure()<< "\n";
+  //cout << "getData_->getStructure(): " << getData_->getStructure()<< "\n";
+  //cout << "getData_->getValue()->getField()->getType(): " << getData_->getValue()->getField()->getType() << "\n";
+  //cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
+  //cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
+
+  // Ensure that type is scalar or enum
+  type_ = getData_->getValue()->getField()->getType();
+  if(!validateType()) {
+    cout << "Error: Type not supported for PV: " + name_ +"\n";
+    errorCode_ = ECMC_PV_TYPE_NOT_SUPPORTED;
+    throw std::runtime_error("Error: Type not supported for PV: " + name_);
+  }
+
   connected_ = true;
   return 0;
 }
@@ -251,16 +256,15 @@ double ecmcPv::getDouble() {
   PVScalarPtr pvScalar = NULL;
   switch(type_) {
     case scalar:
+      // Scalar types are normal AI/AO VAL fields
       valueLatestRead_ = pva_->channel(name_,providerName_)->getDouble();
       return valueLatestRead_;
       break;
 
     case structure:
-      // Support enum BI/BO records
-      //PVScalarPtr pvScalar(getData_->getPVStructure()->getSubField<PVScalar>("value.index"));
+      // Support enum records (return the index of the field)
       get_->get();
-      pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");
-      
+      pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");      
       if(pvScalar) {
         valueLatestRead_ = pvScalar->getAs<double>();
         return valueLatestRead_;
@@ -271,6 +275,7 @@ double ecmcPv::getDouble() {
       break;
 
     case scalarArray:
+      // not supported yet
       errorCode_ = ECMC_PV_GET_ERROR;
       return 0;      
       break;
@@ -425,7 +430,7 @@ void PvaClientData::setData(
    pvStructure = pvStructureFrom;
    bitSet = bitSetFrom;
    pvValue = pvStructure->getSubField("value");
-}
+}ECMC_PV_TIME_BETWEEN_RECONNECT
 
 bool PvaClientData::hasValue()
 {

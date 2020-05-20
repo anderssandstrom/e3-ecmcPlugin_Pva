@@ -117,6 +117,10 @@ double pvaGetBusy(double handle) {
   return getBusy((int)handle);
 }
 
+double pvaGetConnected(double handle) {
+  return getConnected((int)handle);
+}
+
 double pvaGetErr(double handle) {
   return (double)getError((int)handle);
 }
@@ -278,6 +282,23 @@ struct ecmcPluginData pluginDataDef = {
         .funcGenericObj = NULL,
       },
   .funcs[7] =
+      { /*----pv_connected----*/
+        .funcName = ECMC_PV_PLC_CMD_PV_GET_CONNECTED,
+        .funcDesc = "connected = " ECMC_PV_PLC_CMD_PV_GET_CONNECTED "(<handle>) : Get pv connected.",
+        .funcArg0 = NULL,
+        .funcArg1 = pvaGetConnected,
+        .funcArg2 = NULL,
+        .funcArg3 = NULL,
+        .funcArg4 = NULL,
+        .funcArg5 = NULL,
+        .funcArg6 = NULL,
+        .funcArg7 = NULL,
+        .funcArg8 = NULL,
+        .funcArg9 = NULL,
+        .funcArg10 = NULL,
+        .funcGenericObj = NULL,
+      },      
+  .funcs[8] =
       { /*----ut_get_ecmc_ioc_state----*/
         .funcName = "ioc_get_state",
         .funcDesc = "state = ioc_get_state() : Get ecmc epics ioc state.",
@@ -294,7 +315,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[8] =
+  .funcs[9] =
       { /*----ut_get_ecmc_ioc_started----*/
         .funcName = "ioc_get_started",
         .funcDesc = "started = ioc_get_started() : Get ecmc epics ioc started.",
@@ -311,8 +332,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-
-  .funcs[9]  = {0}, // last element set all to zero..
+  .funcs[10]  = {0}, // last element set all to zero..
   .consts[0] = {0}, // last element set all to zero..
 };
 

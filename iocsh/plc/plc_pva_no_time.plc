@@ -40,17 +40,18 @@ if(ioc_get_started() and static.aiHandle=0) {
 
 # Read value of "IOC_TEST:AI" when registered
 if(static.aiHandle > 0) {
- 
-  var retPvGet:=pv_value(static.aiHandle);
-  # Start new read if not busy
-  if(not(pv_busy(static.aiHandle))) {
-    error:=pv_get_async(static.aiHandle);
-    ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.aiHandle));
-  } else {
-    ${DBG=#}println('Still busy pv_get_async()...');
+  if(pv_connected(static.aiHandle)) {
+    var retPvGet:=pv_value(static.aiHandle);
+    # Start new read if not busy
+    if(not(pv_busy(static.aiHandle))) {
+      error:=pv_get_async(static.aiHandle);
+      ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.aiHandle));
+    } else {
+      ${DBG=#}println('Still busy pv_get_async()...');
+    };
+    ${DBG=#}println('AI from PV:', retPvGet);
+    ${DBG=#}println('AI in PLC :', static.AI);
   };
-  ${DBG=#}println('AI from PV:', retPvGet);
-  ${DBG=#}println('AI in PLC :', static.AI);
 };
 
 ####### WRITE PV IOC_TEST:AO ##################################################
@@ -68,15 +69,17 @@ if(ioc_get_started() and static.aoHandle=0) {
 
 # Write value of "IOC_TEST:AO" when registered
 if(static.aoHandle > 0) {
-  # Start new write if not busy
-  if(not(pv_busy(static.aoHandle))) {
-    error:=pv_put_async(static.aoHandle,static.AI);
-    ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
-  }else {    
-    ${DBG=#}println('Still busy pv_put_async()...');
-  }  
-  ${DBG=#}println('AO to PV  :', static.AI);
-  ${DBG=#}println('AO from PV:', static.AO);
+  if(pv_connected(static.aoHandle)) {
+    # Start new write if not busy
+    if(not(pv_busy(static.aoHandle))) {
+      error:=pv_put_async(static.aoHandle,static.AI);
+      ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
+    }else {    
+      ${DBG=#}println('Still busy pv_put_async()...');
+    }  
+    ${DBG=#}println('AO to PV  :', static.AI);
+    ${DBG=#}println('AO from PV:', static.AO);
+  };
 };
 
 ####### READ PV IOC_TEST:BI ###################################################
@@ -89,21 +92,23 @@ if(ioc_get_started() and static.biHandle=0) {
     println('Failed reg IOC_TEST:BI, fail count:', static.failCount);
     # Test to reg again
     static.biHandle:=0;
-  };
+  };  
 };
 
 # Read value of "IOC_TEST:BI" when registered
 if(static.biHandle > 0) {
-  var retPvBIGet:=pv_value(static.biHandle);
-  # Start new read if not busy
-  if(not(pv_busy(static.biHandle))) {
-    error:=pv_get_async(static.biHandle);
-    ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.biHandle), 'err: ', pv_err(static.biHandle));
-  } else {
-    ${DBG=#}println('Still busy pv_get_async()...');
+  if(pv_connected(static.biHandle)) {
+    var retPvBIGet:=pv_value(static.biHandle);
+    # Start new read if not busy
+    if(not(pv_busy(static.biHandle))) {
+      error:=pv_get_async(static.biHandle);
+      ${DBG=#}println('Busy after pv_get_async(): ', pv_busy(static.biHandle), ', err: ', pv_err(static.biHandle));
+    } else {
+      ${DBG=#}println('Still busy pv_get_async()...');
+    };
+    ${DBG=#}println('BI from PV:', retPvBIGet);
+    ${DBG=#}println('BI in PLC :', static.BI);
   };
-  ${DBG=#}println('BI from PV:', retPvBIGet);
-  ${DBG=#}println('BI in PLC :', static.BI);
 };
 
 ####### WRITE PV IOC_TEST:BO ##################################################
@@ -121,14 +126,16 @@ if(ioc_get_started() and static.boHandle=0) {
 
 # Write value of "IOC_TEST:BO" when registered
 if(static.boHandle > 0) {
-  # Start new write if not busy
-  if(not(pv_busy(static.boHandle))) {
-    static.BI:=not(static.BI);
-    error:=pv_put_async(static.boHandle,static.BI);
-    ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.boHandle), 'err: ', pv_err(static.boHandle));
-  }else {    
-    ${DBG=#}println('Still busy pv_put_async()...');
-  }  
-  ${DBG=#}println('BO to PV  :', static.BI);
-  ${DBG=#}println('BO from PV:', static.BO);
+  if(pv_connected(static.boHandle)) {
+    # Start new write if not busy
+    if(not(pv_busy(static.boHandle))) {
+      static.BI:=not(static.BI);
+      error:=pv_put_async(static.boHandle,static.BI);
+      ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.boHandle), ', err: ', pv_err(static.boHandle));
+    }else {    
+      ${DBG=#}println('Still busy pv_put_async()...');
+    }  
+    ${DBG=#}println('BO to PV  :', static.BI);
+    ${DBG=#}println('BO from PV:', static.BO);
+  };
 };

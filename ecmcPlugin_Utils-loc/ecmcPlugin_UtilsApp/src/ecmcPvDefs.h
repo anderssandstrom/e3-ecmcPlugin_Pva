@@ -15,6 +15,8 @@
 
 #define ECMC_IOC_STARTED_STATE 16
 
+#define ECMC_PV_TIME_BETWEEN_RECONNECT 2
+
 #define ECMC_PV_REG_ERROR 1
 #define ECMC_PV_GET_ERROR 2
 #define ECMC_PV_PUT_ERROR 3
@@ -30,5 +32,6 @@
 #define ECMC_PV_PLC_CMD_PV_GET_BUSY "pv_busy"
 #define ECMC_PV_PLC_CMD_PV_GET_ERR "pv_err"
 #define ECMC_PV_PLC_CMD_PV_RST_ERR "pv_rst"
+#define ECMC_PV_PLC_CMD_PV_GET_CONNECTED "pv_connected"
 
 #endif  /* ECMC_PV_DEFS_H_ */

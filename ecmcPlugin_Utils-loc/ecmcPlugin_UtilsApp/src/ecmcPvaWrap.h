@@ -23,6 +23,7 @@ extern "C" {
   int    exePutDataCmd(int handle, double data);
   double getLastValue(int handle);
   int    getBusy(int handle);
+  int    getConnected(int handle);
   void   resetError(int handle);
   int    getError(int handle);
   void   cleanup();

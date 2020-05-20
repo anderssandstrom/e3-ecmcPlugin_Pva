@@ -95,6 +95,17 @@ int getBusy(int handle) {
   return 0;
 }
 
+int getConnected(int handle) {
+  try{
+    return pvVector.at(handle-1)->connected();
+  }    
+  catch(std::exception &e){
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_BUSY "(): "<< e.what() << "\n";
+    return 0;
+  }
+  return 0;
+}
+
 void cleanup() {
  try{
     pvVector.clear();
