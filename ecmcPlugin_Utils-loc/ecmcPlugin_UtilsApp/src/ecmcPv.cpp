@@ -115,7 +115,7 @@ void ecmcPv::monitorConnect(epics::pvData::Status const & status,
 
 void ecmcPv::event(PvaClientMonitorPtr const & monitor)
 {
-  cout << "event " << channelName_ << endl;
+  //cout << "event " << channelName_ << endl;
   while(monitor->poll()) {
     PvaClientMonitorDataPtr monitorData = monitor->getData();
 /*  cout << "monitor " << endl;
@@ -134,8 +134,7 @@ void ecmcPv::event(PvaClientMonitorPtr const & monitor)
     monitor->releaseEvent();
     epicsMutexLock(ecmcGetValMutex_);
     valueLatestRead_ = getDouble(monitorData);
-    epicsMutexUnlock(ecmcGetValMutex_);
-    
+    epicsMutexUnlock(ecmcGetValMutex_);    
   }
 }
 
@@ -165,12 +164,11 @@ void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConn
       pvaClientMonitor_ = pvaClientChannel_->createMonitor(request_);
       pvaClientMonitor_->setRequester(shared_from_this());
       pvaClientMonitor_->issueConnect();
-    }  
-    //if(!pvaClientPut_) {
-      pvaClientPut_ = pvaClientChannel_->createPut(request_);      
-      pvaClientPut_->setRequester(shared_from_this());
-      pvaClientPut_->issueConnect();
-    //}
+    }      
+    pvaClientPut_ = pvaClientChannel_->createPut(request_);      
+    pvaClientPut_->setRequester(shared_from_this());
+    pvaClientPut_->issueConnect();
+    typeValidated_ = false;  //Could change after reconnect?!
   }
 }
 
@@ -528,11 +526,13 @@ void ecmcPv::putDouble(double value) {
 
 int ecmcPv::validateType(PvaClientMonitorDataPtr monData) {
 
-  
   if(!monData->hasValue()) {
     return 0;
   }
   PVScalarPtr pvScalar = NULL;  // Need to redo
+
+  // Assign type
+  type_ = monData->getValue()->getField()->getType();
 
   switch(type_) {
     case scalar:
@@ -546,6 +546,7 @@ int ecmcPv::validateType(PvaClientMonitorDataPtr monData) {
     case structure:
       // Support enum BI/BO records enum type (index, choices)
       if(!(monData->getValue()->getField()->getID()=="enum_t")) {
+        cout << "NOT ENUM_T\n";
         return 0;
       }
 
@@ -553,6 +554,7 @@ int ecmcPv::validateType(PvaClientMonitorDataPtr monData) {
       if (pvScalar) {
         return 1;
       } else {
+        cout << "NOT PVSCALAR\n";
         return 0;
       }       
 

@@ -39,7 +39,10 @@ if(ioc_get_started() and static.aiHandle=0) {
 if(static.aiHandle > 0) {
   if(pv_connected(static.aiHandle)) {
     # Value auto update by monitor.
+    static.before1:=ec_get_time();
     var retPvGet:=pv_value(static.aiHandle);    
+    static.after1:=ec_get_time();
+    ${DBG=#}println('pv_value AI exe time [ns] : ', static.after1-static.before1);
     ${DBG=#}println('Get AI from PV:', retPvGet);
   };
 };
@@ -66,7 +69,7 @@ if(static.aoHandle > 0) {
       error:=pv_put_async(static.aoHandle,static.AO);
       static.after3:=ec_get_time();
       ${DBG=#}println('Put AO to PV  :', static.AO);
-      ${DBG=#}println('pv_reg_async AO exe time [ns] : ', static.after3-static.before3);
+      ${DBG=#}println('pv_put_async AO exe time [ns] : ', static.after3-static.before3);
       ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
     }else {    
       ${DBG=#}println('Still busy pv_put_async()...');
