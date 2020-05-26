@@ -51,7 +51,11 @@ if(static.aiHandle > 0) {
 
 # Register pv IOC_DUMMY:AO when ecmc ioc has started
 if(ioc_get_started() and static.aoHandle=0) {
+  static.before2:=ec_get_time();
   static.aoHandle:=pv_reg_asyn('IOC_DUMMY:AO','pva');
+  static.after2:=ec_get_time();
+  ${DBG=#}println('pv_reg_asyn exe time [ns] : ', static.after2-static.before2);
+
   if(static.aoHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_DUMMY:AO, fail count:', static.failCount);
