@@ -23,18 +23,6 @@ void f_cmd_exe(void *obj) {
   pvObj->exeCmdThread();
 }
 
-// // Start monitor thread
-// void f_monitor(void *obj) {
-//   if(!obj) {
-//     printf("%s/%s:%d: Error: Worker thread PV object NULL..\n",
-//             __FILE__, __FUNCTION__, __LINE__);
-//     return;
-//   }
-
-//   ecmcPv * pvObj = (ecmcPv*)obj;
-//   pvObj->monitorThread();
-// }
-
 ecmcPv::ecmcPv(const std::string &channelName,
                const std::string &providerName,
                const std::string &request, 
@@ -59,9 +47,6 @@ ecmcPv::ecmcPv(const std::string &channelName,
 }
 
  void ecmcPv::init(PvaClientPtr const &pvaClient) {
-  // printf("init!!!!\n");
-  // PvaClientPtr pvaClient = PvaClient::get("pva ca");
-  // printf("init!!!!\n");
 
   pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
   pvaClientChannel_->setStateChangeRequester(shared_from_this());
@@ -79,13 +64,6 @@ ecmcPv::ecmcPv(const std::string &channelName,
   if( cmdExeThread_ == NULL) {
      throw std::runtime_error("Error: Failed cmd exe worker thread.");
   } 
-
-  // // Create monitor thread
-  // threadname = "ecmc.mon.pv" + to_string(index_);
-  // monThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_monitor, this);
-  // if( monThread_ == NULL) {
-  //   throw std::runtime_error("Error: Failed create monitor worker thread.");
-  // }
 }
 
 ecmcPv::ecmcPv() {
@@ -115,14 +93,14 @@ void ecmcPv::monitorConnect(epics::pvData::Status const & status,
 
 void ecmcPv::event(PvaClientMonitorPtr const & monitor)
 {
-  //cout << "event " << channelName_ << endl;
+// cout << "event " << channelName_ << endl;
   while(monitor->poll()) {
     PvaClientMonitorDataPtr monitorData = monitor->getData();
-/*  cout << "monitor " << endl;
-    cout << "changed\n";
-    monitorData->showChanged(cout);
-    cout << "overrun\n";
-    monitorData->showOverrun(cout);*/
+//     cout << "monitor " << endl;
+//     cout << "changed\n";
+//     monitorData->showChanged(cout);
+//     cout << "overrun\n";
+//     monitorData->showOverrun(cout);
     if(!typeValidated_) {
       typeValidated_ = validateType(monitorData);
       if(!typeValidated_) {
@@ -140,7 +118,7 @@ void ecmcPv::event(PvaClientMonitorPtr const & monitor)
 
 void ecmcPv::channelPutConnect (const epics::pvData::Status &status, PvaClientPutPtr const &clientPut)
 {
-  //cout << "putConnect " << channelName_ << " status " << status << endl;
+ // cout << "putConnect " << channelName_ << " status " << status << endl;
   if(!status.isOK()) return;
   putConnected_ = true;
   busyLock_.clear();  
@@ -157,7 +135,7 @@ void ecmcPv::putDone(const epics::pvData::Status & status,
 
 void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConnected)
 {
-  //cout << "channelStateChange " << channelName_ << " isConnected_ " << (isConnected ? "true" : "false") << endl;
+// cout << "channelStateChange " << channelName_ << " isConnected_ " << (isConnected ? "true" : "false") << endl;
   channelConnected_ = isConnected;
   if(isConnected) {
     if(!pvaClientMonitor_) {
@@ -217,25 +195,6 @@ int ecmcPv::reset() {
   return 0;
 }
 
-// void ecmcPv::getCmd() {
-
-//   if(errorCode_ == ECMC_PV_GET_ERROR || errorCode_ == ECMC_PV_BUSY) {
-//     reset(); // reset if try again
-//   }
-
-//   if (getEcmcEpicsIOCState()!=ECMC_IOC_STARTED_STATE) {
-//     errorCode_ = ECMC_PV_IOC_NOT_STARTED;
-//     throw std::runtime_error("Error: ECMC IOC not started.");
-//   }
-
-//   if(busyLock_.test_and_set()) {
-//     errorCode_ = ECMC_PV_BUSY;
-//     throw std::runtime_error("Error: Object busy. Get operation to "+ channelName_ + ") failed." );
-//   }  
-//   cmd_ =  ECMC_PV_CMD_GET;
-//   doCmdEvent_.signal();  
-// }
-
 double ecmcPv::getLastReadValue() {
   
   if (!connected()) {
@@ -248,16 +207,6 @@ double ecmcPv::getLastReadValue() {
   epicsMutexUnlock(ecmcGetValMutex_);
   return retVal;
 }
-
-// // Send Reg cmd to worker
-// void ecmcPv::regCmd() {
-//   if(busyLock_.test_and_set()) {
-//     errorCode_ = ECMC_PV_BUSY;
-//     throw std::runtime_error("Error: Object busy. Reg operation to "+ channelName_ + ") failed." );
-//   }  
-//   cmd_ =  ECMC_PV_CMD_REG;
-//   doCmdEvent_.signal();  
-// }
 
 void ecmcPv::putCmd(double value) {
 
@@ -298,18 +247,6 @@ bool ecmcPv::connected() {
 }
 
  void ecmcPv::exeCmdThread() {
-  // Retry untill success..
-  // while(!connected() ) {
-  //   try{
-  //     connect();      
-  //   }
-  //   catch(std::exception &e){
-  //     std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
-  //               << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
-  //     errorCode_ = ECMC_PV_REG_ERROR;
-  //     epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
-  //   }
-  // }
 
   // Now connected
   while(true) {
@@ -337,130 +274,17 @@ bool ecmcPv::connected() {
   } 
 }
 
-//  // Monitor thread
-// void ecmcPv::monitorThread() {
-
-//   PVScalarPtr pvScalar = NULL;
-//   double retValue = 0;
-//   while(true) {
-//     if(destructs_) {
-//       return; 
-//     }
-//     if(!connected_) {
-//       epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
-//       continue;
-//     }
-// //    try{
-//       if(pvaClientMonitor_->waitEvent(0.1)) {
-//         while(true) {
-  
-//           retValue = 0;        
-//           if(destructs_) {
-//             return; 
-//           }
-  
-//           switch(type_) {
-//             case scalar: 
-//               retValue = monitorData_->getDouble();
-//               break;
-  
-//             case structure:
-//               pvScalar = monitorData_->getPVStructure()->getSubField<PVScalar>("value.index");      
-//               if(pvScalar) {
-//                 retValue = pvScalar->getAs<double>();
-//               } else {
-//                 errorCode_ = ECMC_PV_MON_ERROR;
-//               }
-//               break;
-  
-//             default:
-//               errorCode_ = ECMC_PV_MON_ERROR;
-//               break;
-//           }
-  
-//           epicsMutexLock(ecmcGetValMutex_);
-//           valueLatestRead_ = retValue;
-//           epicsMutexUnlock(ecmcGetValMutex_);
-  
-//           //printf("pv: %s, new value = %lf\n",channelName_.c_str(),valueLatestRead_);
-//           //cout << "changed\n";
-//           //monitorData_->showChanged(cout);
-//           //cout << "overrun\n";
-//           //monitorData_->showOverrun(cout);
-//           pvaClientMonitor_->releaseEvent();
-//           if(!pvaClientMonitor_->poll()) break;
-//         }
-//       }
-//     // } 
-//     // catch(std::exception &e){
-//     //   std::cerr << "Error: IN MONITOR THREAD..";
-//     // }
-//   }
-// }
-
-// int ecmcPv::connect() {
-
-//   pva_ = PvaClient::get(providerName_);
-//   pvaClientChannel_ = pva_->createChannel(channelName_,providerName_);
-//   pvaClientChannel_->setStateChangeRequester(shared_from_this());
-
-//   pvaClientChannel_->issueConnect();
-//   Status status = pvaClientChannel_->waitConnect(1.0);
-//   if(!status.isOK()) {
-//     cout << "Error: connect failed\n";
-//     errorCode_ = ECMC_PV_REG_ERROR;
-//     throw std::runtime_error("Error: Failed connect to:" + channelName_);
-//   }
-//   pvaClientMonitor_ = pva_->channel(channelName_,providerName_,2.0)->monitor("");
-//   monitorData_ = pvaClientMonitor_->getData();
-//   get_ = pvaClientChannel_->createGet();
-//   get_->issueConnect();
-//   status = get_->waitConnect();
-//   if(!status.isOK()) {
-//     cout << "Error: createGet failed\n";
-//     errorCode_ = ECMC_PV_REG_ERROR;
-//     throw std::runtime_error("Error: Failed create get to:" + channelName_);
-//   }
-//   getData_ = get_->getData();
-//   //printf("Get Data has value: %d, isValueScalar %d\n", getData_->hasValue(),getData_->isValueScalar());
-//   pvaClientPut_ = pvaClientChannel_->put();
-//   putData_ = pvaClientPut_->getData();
-
-//   //printf("Put Data has value: %d, isScalarArray %d\n", putData_->hasValue(),getData_->isValueScalarArray());
-//   //cout << "getData_->getvalue(): " << getData_->getValue()<< "\n";
-//   //cout << "getData_->getString(): " << getData_->getString()<< "\n";
-//   //cout << "getData_->getPVStructure(): " << getData_->getPVStructure()<< "\n";
-//   //cout << "getData_->getStructure(): " << getData_->getStructure()<< "\n";
-//   //cout << "getData_->getValue()->getField()->getType(): " << getData_->getValue()->getField()->getType() << "\n";
-//   //cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
-//   //cout << "getData_->getValue()->getField(): " << getData_->getValue()->getField() << "\n"; 
-
-//   // Ensure that type is scalar or enum
-//   type_ = getData_->getValue()->getField()->getType();
-//   if(!validateType()) {
-//     cout << "Error: Type not supported for PV: " + channelName_ +"\n";
-//     errorCode_ = ECMC_PV_TYPE_NOT_SUPPORTED;
-//     throw std::runtime_error("Error: Type not supported for PV: " + channelName_);
-//   }
-
-//   connected_ = true;
-//   return 0;
-// }
-
 double ecmcPv::getDouble(PvaClientMonitorDataPtr monData) {
   double retVal = 0;
   PVScalarPtr pvScalar = NULL;
   switch(type_) {
     case scalar:
       // Scalar types are normal AI/AO VAL fields
-      //retVal = pva_->channel(channelName_,providerName_)->getDouble();
       retVal = monData->getDouble();
       break;
 
     case structure:
       // Support enum records (return the index of the field)
-      //get_->get();
-      //pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");      
       pvScalar = monData->getPVStructure()->getSubField<PVScalar>("value.index");      
       if(pvScalar) {
         retVal = pvScalar->getAs<double>();        

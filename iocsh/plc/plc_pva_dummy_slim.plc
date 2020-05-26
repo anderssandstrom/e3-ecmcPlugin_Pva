@@ -1,19 +1,19 @@
 ###############################################################################
 # Example of pv access fucntions in ecmcPlugin_Utils
 # The pvAccess commands can take "long" time, which can disturb the realtime
-# thread, and is therefore executed async in a separate thread.
+# thread, and is therefore executed asyn in a separate thread.
 #
 # Workflow for a "pv_get()" operation: (update automatically from monitor)
-#  1: Regsiter PV with pv_reg_async() command (returns handle)
-#  2: Wait for pv_reg_async() to finish (pv_busy(), pv_conencted())
+#  1: Regsiter PV with pv_reg_asyn() command (returns handle)
+#  2: Wait for pv_reg_asyn() to finish (pv_busy(), pv_conencted())
 #  3: Get last read value with pv_value().
 #  4: Goto 3 (read again)
 #
 # Workflow for a "pv_put()" operation:
-#  1: Regsiter PV with pv_reg_async() command (returns handle)
-#  2: Wait for pv_reg_async() to finish (pv_busy())
-#  3: Initiate async write command with pv_put_async())
-#  4: Wait for pv_put_async() to finish (pv_busy())
+#  1: Regsiter PV with pv_reg_asyn() command (returns handle)
+#  2: Wait for pv_reg_asyn() to finish (pv_busy())
+#  3: Initiate asyn write command with pv_put_asyn())
+#  4: Wait for pv_put_asyn() to finish (pv_busy())
 #  5: Goto 3 (write again)
 #
 ###############################################################################
@@ -26,7 +26,7 @@ var error:=0;
 
 # Register pv IOC_TEST:AI when ecmc ioc has started
 if(ioc_get_started() and static.aiHandle=0) {
-  static.aiHandle:=pv_reg_async('IOC_TEST:AI','pva');
+  static.aiHandle:=pv_reg_asyn('IOC_TEST:AI','pva');
   if(static.aiHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_TEST:AI, fail count:', static.failCount);

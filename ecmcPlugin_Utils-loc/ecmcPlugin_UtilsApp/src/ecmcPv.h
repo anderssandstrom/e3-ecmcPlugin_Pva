@@ -16,7 +16,6 @@
 #include "ecmcPvDefs.h"
 #include <atomic>  
 #include <iostream>
-// std::atomic_flag
 #include <pv/pvaClient.h>
 
 #include "epicsThread.h"
@@ -28,8 +27,7 @@ using namespace epics::pvAccess;
 using namespace epics::pvaClient;
 
 enum ecmc_pva_cmd {
-  ECMC_PV_CMD_NONE = 0,
-  ECMC_PV_CMD_GET  = 1,
+  ECMC_PV_CMD_NONE = 0,  
   ECMC_PV_CMD_PUT  = 2
 };
 
@@ -61,17 +59,12 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   int    getError();
   int    reset();
   void   start(const string &request);
-  void   stop();
-  // Async Commads
-  // void   getCmd();
-  void   putCmd(double value);
-  // void   regCmd();
-
+  void   stop();  
+  void   putCmd(double value); // Async Commads
   double getLastReadValue();
   bool   busy();
   bool   connected();
   void   exeCmdThread();
-  // void   monitorThread();
   std::string getChannelName();
   std::string getProviderName();
   virtual void monitorConnect(epics::pvData::Status const & status,
@@ -89,53 +82,39 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   int    validateType(PvaClientMonitorDataPtr monData);
   double getDouble(PvaClientMonitorDataPtr monData);
   void   putDouble(double value);
-  static std::string    to_string(int value);
-//  int    connect();
+  static std::string to_string(int value);
 
   std::string  channelName_;
   std::string  providerName_;
   std::string  request_;
-//   pvac::ClientProvider *provider_;
-//   pvac::ClientChannel  *channel_;
-  bool channelConnected_;
-  bool monitorConnected_;
-  bool putConnected_;
-  bool isStarted_;
-  bool typeValidated_;
-  bool                  destructs_;
-  int                   index_;
-  int                   errorCode_;  
-  double                valueLatestRead_;
-  double                valueToWrite_;  
-  Type                  type_;  
-  // Thread related
-  epicsEvent            doCmdEvent_;
-  
-  ecmc_pva_cmd          cmd_;
-  std::atomic_flag      busyLock_;  
-
-  //int                   reconnectCounter_;
+  bool         channelConnected_;
+  bool         monitorConnected_;
+  bool         putConnected_;
+  bool         isStarted_;
+  bool         typeValidated_;
+  bool         destructs_;
+  int          index_;
+  int          errorCode_;  
+  double       valueLatestRead_;
+  double       valueToWrite_;  
+  Type         type_;  
+  ecmc_pva_cmd cmd_;
+  std::atomic_flag busyLock_;  
   
   // General
-  PvaClientPtr pva_;
+  PvaClientPtr        pva_;
   PvaClientChannelPtr pvaClientChannel_;    
   
-  // Get
-  //PvaClientGetPtr get_;
-  //PvaClientGetDataPtr getData_;
-
   // Put
-  PvaClientPutPtr pvaClientPut_;
-  //PvaClientPutDataPtr putData_;
+  PvaClientPutPtr     pvaClientPut_;
 
   // Monitor       
   PvaClientMonitorPtr pvaClientMonitor_;
-  //PvaClientMonitorDataPtr monitorData_;
   
-  epicsThreadId         cmdExeThread_;
-  //epicsThreadId         monThread_;
-  epicsMutexId          ecmcGetValMutex_;
-  
+  // Thread related
+  epicsEvent          doCmdEvent_;
+  epicsThreadId       cmdExeThread_;
+  epicsMutexId        ecmcGetValMutex_;  
 };
 
 #endif  /* ECMC_PV_H_ */

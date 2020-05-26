@@ -82,7 +82,7 @@ public:
       }
     }    
     catch(std::exception &e){
-      std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYNC  "(): " << e.what() << "\n";
+      std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYN  "(): " << e.what() << "\n";
       return T(-ECMC_PV_REG_ERROR);
     }
     

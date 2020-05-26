@@ -163,8 +163,8 @@ struct ecmcPluginData pluginDataDef = {
   // PLC funcs
   .funcs[0] =
       { /*----pv_reg_async----*/
-        .funcName = ECMC_PV_PLC_CMD_PV_REG_ASYNC,
-        .funcDesc = "handle = " ECMC_PV_PLC_CMD_PV_REG_ASYNC "(<pv name>, <provider name pva/ca>) : register new pv.",
+        .funcName = ECMC_PV_PLC_CMD_PV_REG_ASYN,
+        .funcDesc = "handle = " ECMC_PV_PLC_CMD_PV_REG_ASYN "(<pv name>, <provider name pva/ca>) : register new pv.",
         .funcArg0 = NULL,
         .funcArg1 = NULL,
         .funcArg2 = NULL,
@@ -180,8 +180,8 @@ struct ecmcPluginData pluginDataDef = {
       },
   .funcs[1] =
       { /*----pv_put_async----*/
-        .funcName = ECMC_PV_PLC_CMD_PV_PUT_ASYNC,
-        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_PUT_ASYNC "(<handle>, <value>) : Execute async pv_put cmd.",
+        .funcName = ECMC_PV_PLC_CMD_PV_PUT_ASYN,
+        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_PUT_ASYN "(<handle>, <value>) : Execute async pv_put cmd.",
         .funcArg0 = NULL,
         .funcArg1 = NULL,
         .funcArg2 = pvaExePutCmd,

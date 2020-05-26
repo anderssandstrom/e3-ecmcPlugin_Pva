@@ -48,26 +48,13 @@ int getError(int handle) {
 }  
 
 // Normal plc functions
-// int exeGetDataCmd(int handle) {
-//   try{
-//     //pvVector.at(handle-1)->getCmd();
-//     return 0;
-//   }    
-//   catch(std::exception &e){
-//     std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(): " << e.what() << "\n";
-//     return ECMC_PV_GET_ERROR;
-//   }
-//   return ECMC_PV_PUT_ERROR;
-// }
-
-// Normal plc functions
 int exePutDataCmd(int handle, double value) {
   try{
     pvVector.at(handle-1)->putCmd(value);
     return 0;
   }    
   catch(std::exception &e){
-    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_PUT_ASYNC "(): " << e.what() << "\n";
+    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_PUT_ASYN "(): " << e.what() << "\n";
     return ECMC_PV_PUT_ERROR;
   }
   return ECMC_PV_PUT_ERROR;

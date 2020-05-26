@@ -4,16 +4,16 @@
 # thread, and is therefore executed async in a separate thread.
 #
 # Workflow for a "pv_get()" operation: (update automatically from monitor)
-#  1: Regsiter PV with pv_reg_async() command (returns handle)
-#  2: Wait for pv_reg_async() to finish (pv_busy(), pv_conencted())
+#  1: Regsiter PV with pv_reg_asyn() command (returns handle)
+#  2: Wait for pv_reg_asyn() to finish (pv_busy(), pv_conencted())
 #  3: Get last read value with pv_value().
 #  4: Goto 3 (read again)
 #
 # Workflow for a "pv_put()" operation:
-#  1: Regsiter PV with pv_reg_async() command (returns handle)
-#  2: Wait for pv_reg_async() to finish (pv_busy())
-#  3: Initiate async write command with pv_put_async())
-#  4: Wait for pv_put_async() to finish (pv_busy())
+#  1: Regsiter PV with pv_reg_asyn() command (returns handle)
+#  2: Wait for pv_reg_asyn() to finish (pv_busy())
+#  3: Initiate async write command with pv_put_asyn())
+#  4: Wait for pv_put_asyn() to finish (pv_busy())
 #  5: Goto 3 (write again)
 #
 ###############################################################################
@@ -26,7 +26,7 @@ var error:=0;
 
 # Register pv IOC_DUMMY:AI when ecmc ioc has started
 if(ioc_get_started() and static.aiHandle=0) {
-  static.aiHandle:=pv_reg_async('IOC_DUMMY:AI','pva');
+  static.aiHandle:=pv_reg_asyn('IOC_DUMMY:AI','pva');
   if(static.aiHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_DUMMY:AI, fail count:', static.failCount);
@@ -51,7 +51,7 @@ if(static.aiHandle > 0) {
 
 # Register pv IOC_DUMMY:AO when ecmc ioc has started
 if(ioc_get_started() and static.aoHandle=0) {
-  static.aoHandle:=pv_reg_async('IOC_DUMMY:AO','pva');
+  static.aoHandle:=pv_reg_asyn('IOC_DUMMY:AO','pva');
   if(static.aoHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_DUMMY:AO, fail count:', static.failCount);
@@ -66,13 +66,13 @@ if(static.aoHandle > 0) {
     # Start new write if not busy
     if(not(pv_busy(static.aoHandle))) {
       static.before3:=ec_get_time();
-      error:=pv_put_async(static.aoHandle,static.AO);
+      error:=pv_put_asyn(static.aoHandle,static.AO);
       static.after3:=ec_get_time();
       ${DBG=#}println('Put AO to PV  :', static.AO);
-      ${DBG=#}println('pv_put_async AO exe time [ns] : ', static.after3-static.before3);
-      ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
+      ${DBG=#}println('pv_put_asyn AO exe time [ns] : ', static.after3-static.before3);
+      ${DBG=#}println('Busy after pv_put_asyn(): ', pv_busy(static.aoHandle));
     }else {    
-      ${DBG=#}println('Still busy pv_put_async()...');
+      ${DBG=#}println('Still busy pv_put_asyn()...');
     }      
   };
 };
@@ -81,7 +81,7 @@ if(static.aoHandle > 0) {
 
 # Register pv IOC_DUMMY:BI when ecmc ioc has started
 if(ioc_get_started() and static.biHandle=0) {
-  static.biHandle:=pv_reg_async('IOC_DUMMY:BI','pva');
+  static.biHandle:=pv_reg_asyn('IOC_DUMMY:BI','pva');
   if(static.biHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_DUMMY:BI, fail count:', static.failCount);
@@ -102,7 +102,7 @@ if(static.biHandle > 0) {
 
 # Register pv IOC_DUMMY:BO when ecmc ioc has started
 if(ioc_get_started() and static.boHandle=0) {
-  static.boHandle:=pv_reg_async('IOC_DUMMY:BO','pva');
+  static.boHandle:=pv_reg_asyn('IOC_DUMMY:BO','pva');
   if(static.boHandle < 0) {
     static.failCount +=1; 
     println('Failed reg IOC_DUMMY:BO, fail count:', static.failCount);
@@ -117,11 +117,11 @@ if(static.boHandle > 0) {
     # Start new write if not busy
     if(not(pv_busy(static.boHandle))) {
       static.BO:=not(static.BO);
-      error:=pv_put_async(static.boHandle,static.BO);
+      error:=pv_put_asyn(static.boHandle,static.BO);
       ${DBG=#}println('Put BO to PV  :', static.BO);    
-      ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.boHandle), ', err: ', pv_err(static.boHandle));
+      ${DBG=#}println('Busy after pv_put_asyn(): ', pv_busy(static.boHandle), ', err: ', pv_err(static.boHandle));
     }else {    
-      ${DBG=#}println('Still busy pv_put_async()...');
+      ${DBG=#}println('Still busy pv_put_asyn()...');
     }
   };
 };
