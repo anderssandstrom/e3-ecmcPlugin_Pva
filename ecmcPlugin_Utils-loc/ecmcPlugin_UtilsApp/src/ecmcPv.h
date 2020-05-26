@@ -34,13 +34,20 @@ enum ecmc_pva_cmd {
   ECMC_PV_CMD_REG  = 3,  
 };
 
-class ecmcPv {
+ class ecmcPv;
+ typedef std::tr1::shared_ptr<ecmcPv> ecmcPvPtr;
+
+
+class ecmcPv :  public PvaClientChannelStateChangeRequester,
+                public std::tr1::enable_shared_from_this<ecmcPv>
+{
  public:
+  POINTER_DEFINITIONS(ecmcPv);
   ecmcPv(std::string name, std::string providerName, int index);
   ~ecmcPv();
   int    getError();
   int    reset();
-
+  virtual void   channelStateChange(PvaClientChannelPtr const & channel, bool isConnected);
   // Async Commads
   void   getCmd();
   void   putCmd(double value);
@@ -53,7 +60,7 @@ class ecmcPv {
   void   monitorThread();
   std::string getPvName();
   std::string getProvider();
-
+  static ecmcPvPtr create(std::string pvName,std::string providerName, int index);
  private:
  int    validateType();
  double getDouble();
@@ -61,7 +68,7 @@ class ecmcPv {
  static std::string    to_string(int value);
  int    connect();
 
-  std::string           name_;
+  std::string           channelName_;
   std::string           providerName_;
 //   pvac::ClientProvider *provider_;
 //   pvac::ClientChannel  *channel_;

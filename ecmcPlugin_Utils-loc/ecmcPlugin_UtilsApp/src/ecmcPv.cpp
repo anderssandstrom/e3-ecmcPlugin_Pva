@@ -36,8 +36,9 @@ void f_monitor(void *obj) {
   pvObj->monitorThread();
 }
 
-ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
-  name_            = pvName;
+ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index):
+               PvaClientChannelStateChangeRequester() {
+  channelName_            = pvName;
   providerName_    = providerName;
   errorCode_       = 0;
   destructs_       = 0;
@@ -49,6 +50,10 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
   valueToWrite_    = 0;
   type_            = scalar;
   connected_       = false;
+
+}
+
+ void ecmcPv::init(PvaClientPtr const &pvaClient) {
 
   // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
   ecmcGetValMutex_ = epicsMutexCreate();
@@ -71,6 +76,14 @@ ecmcPv::ecmcPv(std::string pvName,std::string providerName, int index) {
   }
 }
 
+ ecmcPvPtr ecmcPv::create(std::string pvName,std::string providerName, int index)
+    {
+        ecmcPvPtr client(ecmcPvPtr(
+             new ecmcPv(pvName,providerName,index)));
+        client->init(pvaClient);
+        return client;
+    }
+
 ecmcPv::~ecmcPv() {
   doCmdEvent_.signal();
   destructs_ = 1;
@@ -79,7 +92,7 @@ ecmcPv::~ecmcPv() {
 }
 
 std::string ecmcPv::getPvName(){
-  return name_;
+  return channelName_;
 }
 
 std::string ecmcPv::getProvider() {
@@ -108,7 +121,7 @@ void ecmcPv::getCmd() {
 
   if(busyLock_.test_and_set()) {
     errorCode_ = ECMC_PV_BUSY;
-    throw std::runtime_error("Error: Object busy. Get operation to "+ name_ + ") failed." );
+    throw std::runtime_error("Error: Object busy. Get operation to "+ channelName_ + ") failed." );
   }  
   cmd_ =  ECMC_PV_CMD_GET;
   doCmdEvent_.signal();  
@@ -125,7 +138,7 @@ double ecmcPv::getLastReadValue() {
 void ecmcPv::regCmd() {
   if(busyLock_.test_and_set()) {
     errorCode_ = ECMC_PV_BUSY;
-    throw std::runtime_error("Error: Object busy. Reg operation to "+ name_ + ") failed." );
+    throw std::runtime_error("Error: Object busy. Reg operation to "+ channelName_ + ") failed." );
   }  
   cmd_ =  ECMC_PV_CMD_REG;
   doCmdEvent_.signal();  
@@ -144,7 +157,7 @@ void ecmcPv::putCmd(double value) {
 
   if(busyLock_.test_and_set()) {
     errorCode_ = ECMC_PV_BUSY;
-    throw std::runtime_error("Error: Object busy. Put operation to "+ name_ + ") failed." );
+    throw std::runtime_error("Error: Object busy. Put operation to "+ channelName_ + ") failed." );
   }  
   
   cmd_ =  ECMC_PV_CMD_PUT;
@@ -172,7 +185,7 @@ bool ecmcPv::connected() {
 }
 
 void ecmcPv::exeCmdThread() {
-  std::cerr << "Registering PV for: " << name_ << "\n";
+  std::cerr << "Registering PV for: " << channelName_ << "\n";
   // Retry untill success..
   while(not connected_) {
     try{
@@ -281,7 +294,7 @@ void ecmcPv::monitorThread() {
           valueLatestRead_ = retValue;
           epicsMutexUnlock(ecmcGetValMutex_);
   
-          //printf("pv: %s, new value = %lf\n",name_.c_str(),valueLatestRead_);
+          //printf("pv: %s, new value = %lf\n",channelName_.c_str(),valueLatestRead_);
           //cout << "changed\n";
           //monitorData_->showChanged(cout);
           //cout << "overrun\n";
@@ -297,26 +310,41 @@ void ecmcPv::monitorThread() {
   }
 }
 
+void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConnected)
+    {
+        cout << "channelStateChange " << channelName_ << " isConnected " << (isConnected ? "true" : "false") << endl;
+        // channelConnected = isConnected;
+        // if(isConnected) {
+        //     if(!pvaClientMonitor) {
+        //         pvaClientMonitor = pvaClientChannel->createMonitor(request);
+        //         pvaClientMonitor->setRequester(shared_from_this());
+        //         pvaClientMonitor->issueConnect();
+        //     }
+        // }
+    }
+
 int ecmcPv::connect() {
 
-  pva_ = PvaClient::get("pva ca");
-  pvaChannel_ = pva_->createChannel(name_,providerName_);
-  monitor_ = pva_->channel(name_,providerName_,2.0)->monitor("");
-  monitorData_ = monitor_->getData();
+  pva_ = PvaClient::get(providerName_);
+  pvaChannel_ = pva_->createChannel(channelName_,providerName_);
+  pvaChannel_->setStateChangeRequester(shared_from_this());
+
   pvaChannel_->issueConnect();
   Status status = pvaChannel_->waitConnect(1.0);
   if(!status.isOK()) {
     cout << "Error: connect failed\n";
     errorCode_ = ECMC_PV_REG_ERROR;
-    throw std::runtime_error("Error: Failed connect to:" + name_);
+    throw std::runtime_error("Error: Failed connect to:" + channelName_);
   }
+  monitor_ = pva_->channel(channelName_,providerName_,2.0)->monitor("");
+  monitorData_ = monitor_->getData();
   get_ = pvaChannel_->createGet();
   get_->issueConnect();
   status = get_->waitConnect();
   if(!status.isOK()) {
     cout << "Error: createGet failed\n";
     errorCode_ = ECMC_PV_REG_ERROR;
-    throw std::runtime_error("Error: Failed create get to:" + name_);
+    throw std::runtime_error("Error: Failed create get to:" + channelName_);
   }
   getData_ = get_->getData();
   //printf("Get Data has value: %d, isValueScalar %d\n", getData_->hasValue(),getData_->isValueScalar());
@@ -335,9 +363,9 @@ int ecmcPv::connect() {
   // Ensure that type is scalar or enum
   type_ = getData_->getValue()->getField()->getType();
   if(!validateType()) {
-    cout << "Error: Type not supported for PV: " + name_ +"\n";
+    cout << "Error: Type not supported for PV: " + channelName_ +"\n";
     errorCode_ = ECMC_PV_TYPE_NOT_SUPPORTED;
-    throw std::runtime_error("Error: Type not supported for PV: " + name_);
+    throw std::runtime_error("Error: Type not supported for PV: " + channelName_);
   }
 
   connected_ = true;
@@ -350,7 +378,7 @@ double ecmcPv::getDouble() {
   switch(type_) {
     case scalar:
       // Scalar types are normal AI/AO VAL fields
-      retVal = pva_->channel(name_,providerName_)->getDouble();      
+      retVal = pva_->channel(channelName_,providerName_)->getDouble();      
       break;
 
     case structure:

@@ -15,7 +15,7 @@
 #include "ecmcPv.h"
 #include "ecmcPvDefs.h"
 
-vector<ecmcPv*> pvVector;
+vector<ecmcPvPtr> pvVector;
 
 // class for exprtk handle=pv_reg(<pvName>, <providerName = "pva"/"ca">) command
 template <typename T>
@@ -51,16 +51,16 @@ public:
 
     try{
       // Create object and append to "global" vector
-      ecmcPv* pv = new ecmcPv(pvNameStr.c_str(),providerNameStr.c_str(),pvVector.size()+1);
+      //ecmcPv* pv = new ecmcPv(pvNameStr.c_str(),providerNameStr.c_str(),pvVector.size()+1);
       
       //check if pv, provider combo already exist.. then erase and replace with new
       
       for(unsigned int i = 0; i < pvVector.size(); ++i) {
         if(pvVector.at(i)->getPvName() == pvNameStr && 
            pvVector.at(i)->getProvider() == providerNameStr) {
-          ecmcPv* pvTemp = pvVector.at(i);
+          ecmcPvPtr pvTemp = pvVector.at(i);
           pvVector.at(i) = NULL;
-          delete pvTemp;
+          //delete pvTemp;
           index = i;
           break;
         }
@@ -69,9 +69,11 @@ public:
       // return handle to object (1 higher than index to avoid 0)
 
       if(index>=0) {             // replace object
+       ecmcPvPtr pv = ecmcPv::create(pvNameStr.c_str(),providerNameStr.c_str(),index+1);
         pvVector.at(index) = pv; 
         return index + 1;        // Start count handles from 1
       } else {                   // Add
+        ecmcPvPtr pv = ecmcPv::create(pvNameStr.c_str(),providerNameStr.c_str(),pvVector.size()+1);
         pvVector.push_back(pv);  
         return pvVector.size();
       }

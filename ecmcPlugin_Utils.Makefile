@@ -55,6 +55,7 @@ USR_LDFLAGS  += -lpvAccessCA
 USR_LDFLAGS  += -lnt
 USR_LDFLAGS  += -lca
 USR_LDFLAGS  += -lCom
+USR_LDFLAGS  += -lpvData
 $(info $$USR_LDFLAGS is [${E3_LD_LIBRARY_PATH}])
 USR_INCLUDES += -I$(where_am_I)$(APPSRC)
 
