@@ -40,7 +40,7 @@ if(static.aiHandle > 0) {
   if(pv_connected(static.aiHandle)) {
     # Value auto update by monitor.
     var retPvGet:=pv_value(static.aiHandle);    
-    ${DBG=#}println('Get AI from PV:', retPvGet);
+    ${DBG=#}println('Get AI from PV YES!!!:', retPvGet);
   };
 };
 

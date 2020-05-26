@@ -25,6 +25,7 @@
 #define ECMC_PV_IOC_NOT_STARTED 6
 #define ECMC_PV_BUSY 7
 #define ECMC_PV_TYPE_NOT_SUPPORTED 8
+#define ECMC_PV_NOT_CONNECTED 9
 
 #define ECMC_PV_PLC_CMD_PV_REG_ASYNC "pv_reg_async"
 #define ECMC_PV_PLC_CMD_PV_GET_ASYNC "pv_get_async"

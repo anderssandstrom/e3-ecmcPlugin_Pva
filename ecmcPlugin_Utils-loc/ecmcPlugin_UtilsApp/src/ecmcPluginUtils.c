@@ -101,9 +101,9 @@ int pvaExitRT(void){
 }
 
 // Normal PLC functions
-double pvaExeGetCmd(double handle) {
-  return (double)exeGetDataCmd((int)handle);
-}
+// double pvaExeGetCmd(double handle) {
+//   return (double)exeGetDataCmd((int)handle);
+// }
 
 double pvaExePutCmd(double handle, double value) {
   return (double)exePutDataCmd((int)handle, value);
@@ -195,24 +195,24 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
+  // .funcs[2] =
+  //     { /*----pv_get_async----*/
+  //       .funcName = ECMC_PV_PLC_CMD_PV_GET_ASYNC,
+  //       .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(<handle>) : Execute async pv_get cmd.",
+  //       .funcArg0 = NULL,
+  //       .funcArg1 = pvaExeGetCmd,
+  //       .funcArg2 = NULL,
+  //       .funcArg3 = NULL,
+  //       .funcArg4 = NULL,
+  //       .funcArg5 = NULL,
+  //       .funcArg6 = NULL,
+  //       .funcArg7 = NULL,
+  //       .funcArg8 = NULL,
+  //       .funcArg9 = NULL,
+  //       .funcArg10 = NULL,
+  //       .funcGenericObj = NULL,
+  //     },
   .funcs[2] =
-      { /*----pv_get_async----*/
-        .funcName = ECMC_PV_PLC_CMD_PV_GET_ASYNC,
-        .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(<handle>) : Execute async pv_get cmd.",
-        .funcArg0 = NULL,
-        .funcArg1 = pvaExeGetCmd,
-        .funcArg2 = NULL,
-        .funcArg3 = NULL,
-        .funcArg4 = NULL,
-        .funcArg5 = NULL,
-        .funcArg6 = NULL,
-        .funcArg7 = NULL,
-        .funcArg8 = NULL,
-        .funcArg9 = NULL,
-        .funcArg10 = NULL,
-        .funcGenericObj = NULL,
-      },
-  .funcs[3] =
       { /*----pv_get_value----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_VALUE,
         .funcDesc = "value = " ECMC_PV_PLC_CMD_PV_GET_VALUE "(<handle>) : Get result from last pv_get_async() or pv_put_async() cmd.",
@@ -229,7 +229,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[4] =
+  .funcs[3] =
       { /*----pv_get_busy----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_BUSY,
         .funcDesc = "busy = "  ECMC_PV_PLC_CMD_PV_GET_BUSY "(<handle>) : Get status of last async command (pv_reg_async(), pv_get_async(), pv_put_async()).",
@@ -247,7 +247,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcGenericObj = NULL,
       },
 
-  .funcs[5] =
+  .funcs[4] =
       { /*----pv_get_err----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_ERR,
         .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ERR "(<handle>) : Get error code.",
@@ -264,7 +264,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[6] =
+  .funcs[5] =
       { /*----pv_rst_err----*/
         .funcName = ECMC_PV_PLC_CMD_PV_RST_ERR,
         .funcDesc = ECMC_PV_PLC_CMD_PV_RST_ERR "(<handle>) : Reset error code.",
@@ -281,7 +281,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[7] =
+  .funcs[6] =
       { /*----pv_connected----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_CONNECTED,
         .funcDesc = "connected = " ECMC_PV_PLC_CMD_PV_GET_CONNECTED "(<handle>) : Get pv connected.",
@@ -298,7 +298,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },      
-  .funcs[8] =
+  .funcs[7] =
       { /*----ut_get_ecmc_ioc_state----*/
         .funcName = "ioc_get_state",
         .funcDesc = "state = ioc_get_state() : Get ecmc epics ioc state.",
@@ -315,7 +315,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[9] =
+  .funcs[8] =
       { /*----ut_get_ecmc_ioc_started----*/
         .funcName = "ioc_get_started",
         .funcDesc = "started = ioc_get_started() : Get ecmc epics ioc started.",
@@ -332,7 +332,7 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  .funcs[10]  = {0}, // last element set all to zero..
+  .funcs[9]  = {0}, // last element set all to zero..
   .consts[0] = {0}, // last element set all to zero..
 };
 

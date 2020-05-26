@@ -44,40 +44,40 @@ ecmcPv::ecmcPv(const std::string &channelName,
       request_(request),
       channelConnected_(false),
       monitorConnected_(false),
-      isStarted_(false), 
+      putConnected_(false),
+      isStarted_(false),
+      typeValidated_(false),
+//      destructs_(false),
       index_(index),
       errorCode_(0), 
-
-//      destructs_(0),
-//      cmd_(ECMC_PV_CMD_NONE),
       valueLatestRead_(0),
-      valueToWrite_(0),
+//      valueToWrite_(0),      
       type_(scalar)
+//      cmd_(ECMC_PV_CMD_NONE)
 {
   busyLock_.test_and_set();
 }
 
  void ecmcPv::init(PvaClientPtr const &pvaClient) {
-  //    printf("init!!!!\n");
+  // printf("init!!!!\n");
   // PvaClientPtr pvaClient = PvaClient::get("pva ca");
   // printf("init!!!!\n");
-
 
   pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
   pvaClientChannel_->setStateChangeRequester(shared_from_this());
   pvaClientChannel_->issueConnect();
 
   // // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
-  // ecmcGetValMutex_ = epicsMutexCreate();
-  // if(!ecmcGetValMutex_) {
-  //   throw std::runtime_error("Error: Create Mutex failed.");
-  // }
+   ecmcGetValMutex_ = epicsMutexCreate();
+   if(!ecmcGetValMutex_) {
+     throw std::runtime_error("Error: Create Mutex failed.");
+   }
 
   // // Create worker thread
   // std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
   // cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
   // if( cmdExeThread_ == NULL) {
-  //   throw std::runtime_error("Error: Failed cmd exe worker thread.");
+  //    throw std::runtime_error("Error: Failed cmd exe worker thread.");
   // } 
 
   // // Create monitor thread
@@ -97,8 +97,7 @@ ecmcPvPtr ecmcPv::create(PvaClientPtr const & pvaClient,
                          const std::string  & request,
                          int index)
 {
-  ecmcPvPtr client(ecmcPvPtr(
-            new ecmcPv(channelName, providerName, request, index)));
+  ecmcPvPtr client(ecmcPvPtr(new ecmcPv(channelName, providerName, request, index)));
   client->init(pvaClient);
   return client;
 }
@@ -113,19 +112,48 @@ void ecmcPv::monitorConnect(epics::pvData::Status const & status,
   isStarted_ = true;
   pvaClientMonitor_->start();
 }
-    
+
 void ecmcPv::event(PvaClientMonitorPtr const & monitor)
 {
   cout << "event " << channelName_ << endl;
   while(monitor->poll()) {
     PvaClientMonitorDataPtr monitorData = monitor->getData();
-    cout << "monitor " << endl;
+/*  cout << "monitor " << endl;
     cout << "changed\n";
     monitorData->showChanged(cout);
     cout << "overrun\n";
-    monitorData->showOverrun(cout);
+    monitorData->showOverrun(cout);*/
+    if(!typeValidated_) {
+      typeValidated_ = validateType(monitorData);
+      if(!typeValidated_) {
+        cout << "Type not supported";
+        errorCode_ = ECMC_PV_TYPE_NOT_SUPPORTED;
+        return;
+      }
+    }   
     monitor->releaseEvent();
+    epicsMutexLock(ecmcGetValMutex_);
+    valueLatestRead_ = getDouble(monitorData);
+    epicsMutexUnlock(ecmcGetValMutex_);
+    
   }
+}
+
+void ecmcPv::channelPutConnect (const epics::pvData::Status &status, PvaClientPutPtr const &clientPut)
+{
+  cout << "putConnect " << channelName_ << " status " << status << endl;
+  if(!status.isOK()) return;
+  putConnected_ = true;
+  busyLock_.clear();  
+}
+
+void ecmcPv::putDone(const epics::pvData::Status & status,
+                       PvaClientPutPtr const & clientPut) {
+  // put cmd done.. allow new
+  busyLock_.clear();
+  if(!status.isOK()){
+    errorCode_ = ECMC_PV_GET_ERROR;   
+  }  
 }
 
 void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConnected)
@@ -137,7 +165,12 @@ void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConn
       pvaClientMonitor_ = pvaClientChannel_->createMonitor(request_);
       pvaClientMonitor_->setRequester(shared_from_this());
       pvaClientMonitor_->issueConnect();
-    }
+    }  
+    //if(!pvaClientPut_) {
+      pvaClientPut_ = pvaClientChannel_->createPut(request_);      
+      pvaClientPut_->setRequester(shared_from_this());
+      pvaClientPut_->issueConnect();
+    //}
   }
 }
 
@@ -164,10 +197,9 @@ void ecmcPv::start(const string &request)
 }
 
 ecmcPv::~ecmcPv() {
-  // doCmdEvent_.signal();
-  // destructs_ = 1;
-  // epicsThreadMustJoin(cmdExeThread_);
-  // epicsThreadMustJoin(monThread_);
+  //  destructs_ = 1;
+  //  doCmdEvent_.signal();
+  //  epicsThreadMustJoin(cmdExeThread_);
 }
 
 std::string ecmcPv::getChannelName(){
@@ -207,9 +239,15 @@ int ecmcPv::reset() {
 // }
 
 double ecmcPv::getLastReadValue() {
-//  epicsMutexLock(ecmcGetValMutex_);
+  
+  if (!connected()) {
+    errorCode_ = ECMC_PV_NOT_CONNECTED;
+    throw std::runtime_error("Error: Not connected.");
+  }
+
+  epicsMutexLock(ecmcGetValMutex_);
   double retVal=valueLatestRead_;
-//  epicsMutexUnlock(ecmcGetValMutex_);
+  epicsMutexUnlock(ecmcGetValMutex_);
   return retVal;
 }
 
@@ -223,30 +261,28 @@ double ecmcPv::getLastReadValue() {
 //   doCmdEvent_.signal();  
 // }
 
-// void ecmcPv::putCmd(double value) {
+void ecmcPv::putCmd(double value) {
 
-//   if(errorCode_ == ECMC_PV_PUT_ERROR || errorCode_ == ECMC_PV_BUSY) {
-//     reset(); // reset if try again
-//   }
+  reset(); // reset if try again
   
-//   if (getEcmcEpicsIOCState()!=ECMC_IOC_STARTED_STATE) {
-//     errorCode_ = ECMC_PV_IOC_NOT_STARTED;
-//     throw std::runtime_error("Error: ECMC IOC not started.");
-//   }
+  if (!connected()) {
+    errorCode_ = ECMC_PV_NOT_CONNECTED;
+    throw std::runtime_error("Error: Not connected.");
+  }
 
-//   if(busyLock_.test_and_set()) {
-//     errorCode_ = ECMC_PV_BUSY;
-//     throw std::runtime_error("Error: Object busy. Put operation to "+ channelName_ + ") failed." );
-//   }  
+  if(busyLock_.test_and_set()) {
+    errorCode_ = ECMC_PV_BUSY;
+    throw std::runtime_error("Error: Object busy. Put operation to "+ channelName_ + ") failed." );
+  }  
   
-//   cmd_ =  ECMC_PV_CMD_PUT;
-//   valueToWrite_ = value;
+  //cmd_ =  ECMC_PV_CMD_PUT;
+  //valueToWrite_ = value;
+  putDouble(value);
+  // Execute cmd
+  //doCmdEvent_.signal();
 
-//   // Execute cmd
-//   doCmdEvent_.signal();
-
-//   return;
-// }
+  return;
+}
 
 bool ecmcPv::busy() {
   if(busyLock_.test_and_set()){
@@ -260,23 +296,23 @@ bool ecmcPv::busy() {
 }
 
 bool ecmcPv::connected() {
-  return channelConnected_ && monitorConnected_;
+  return channelConnected_ && monitorConnected_  && isStarted_ && putConnected_ && typeValidated_;
 }
 
-// void ecmcPv::exeCmdThread() {
+//  void ecmcPv::exeCmdThread() {
 //   std::cerr << "Registering PV for: " << channelName_ << "\n";
 //   // Retry untill success..
-//   while(not connected_) {
-//     try{
-//       connect();      
-//     }
-//     catch(std::exception &e){
-//       std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
-//                 << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
-//       errorCode_ = ECMC_PV_REG_ERROR;
-//       epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
-//     }
-//   }
+//   // while(!connected() ) {
+//   //   try{
+//   //     connect();      
+//   //   }
+//   //   catch(std::exception &e){
+//   //     std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
+//   //               << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
+//   //     errorCode_ = ECMC_PV_REG_ERROR;
+//   //     epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
+//   //   }
+//   // }
 
 //   // Now connected
 //   while(true) {
@@ -288,14 +324,12 @@ bool ecmcPv::connected() {
 //     }
 
 //     switch(cmd_) {
-//       case ECMC_PV_CMD_GET:
+//       case ECMC_PV_CMD_GET:  // Normally not used.. Use monitor instead
 //         try{
-//           if(connected_) {
+//           if(connected()) {
 //             epicsMutexLock(ecmcGetValMutex_);
 //             valueLatestRead_ = getDouble();
 //             epicsMutexUnlock(ecmcGetValMutex_);                        
-//           }else {
-//             errorCode_ = ECMC_PV_REG_ERROR;
 //           }
 //         }
 //         catch(std::exception &e){
@@ -304,24 +338,14 @@ bool ecmcPv::connected() {
 //         break;
 //       case ECMC_PV_CMD_PUT:
 //         try{
-//           if(connected_) {
+//           if(connected()) {
 //             putDouble(valueToWrite_);            
-//           }else {
-//             errorCode_ = ECMC_PV_REG_ERROR;
 //           }
 //         }
 //         catch(std::exception &e){
 //           errorCode_ = ECMC_PV_PUT_ERROR;
 //         }
 //         break;
-//       case ECMC_PV_CMD_REG:  // Not used
-//         try{
-//           connect();
-//         }
-//         catch(std::exception &e){
-//           errorCode_ = ECMC_PV_REG_ERROR;
-//         }
-//         break;    
 //       default:
 //         break;
 //     }    
@@ -414,8 +438,8 @@ bool ecmcPv::connected() {
 //   }
 //   getData_ = get_->getData();
 //   //printf("Get Data has value: %d, isValueScalar %d\n", getData_->hasValue(),getData_->isValueScalar());
-//   put_ = pvaClientChannel_->put();
-//   putData_ = put_->getData();
+//   pvaClientPut_ = pvaClientChannel_->put();
+//   putData_ = pvaClientPut_->getData();
 
 //   //printf("Put Data has value: %d, isScalarArray %d\n", putData_->hasValue(),getData_->isValueScalarArray());
 //   //cout << "getData_->getvalue(): " << getData_->getValue()<< "\n";
@@ -438,125 +462,127 @@ bool ecmcPv::connected() {
 //   return 0;
 // }
 
-// double ecmcPv::getDouble() {
-//   double retVal = 0;
-//   PVScalarPtr pvScalar = NULL;
-//   switch(type_) {
-//     case scalar:
-//       // Scalar types are normal AI/AO VAL fields
-//       retVal = pva_->channel(channelName_,providerName_)->getDouble();      
-//       break;
+double ecmcPv::getDouble(PvaClientMonitorDataPtr monData) {
+  double retVal = 0;
+  PVScalarPtr pvScalar = NULL;
+  switch(type_) {
+    case scalar:
+      // Scalar types are normal AI/AO VAL fields
+      //retVal = pva_->channel(channelName_,providerName_)->getDouble();
+      retVal = monData->getDouble();
+      break;
 
-//     case structure:
-//       // Support enum records (return the index of the field)
-//       get_->get();
-//       pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");      
-//       if(pvScalar) {
-//         retVal = pvScalar->getAs<double>();        
-//       } else {
-//         errorCode_ = ECMC_PV_GET_ERROR;
-//         return 0;
-//       }
-//       break;
+    case structure:
+      // Support enum records (return the index of the field)
+      //get_->get();
+      //pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");      
+      pvScalar = monData->getPVStructure()->getSubField<PVScalar>("value.index");      
+      if(pvScalar) {
+        retVal = pvScalar->getAs<double>();        
+      } else {
+        errorCode_ = ECMC_PV_GET_ERROR;
+        return 0;
+      }
+      break;
 
-//     case scalarArray:
-//       // not supported yet
-//       errorCode_ = ECMC_PV_GET_ERROR;
-//       return 0;      
-//       break;
+    case scalarArray:
+      // not supported yet
+      errorCode_ = ECMC_PV_GET_ERROR;
+      return 0;      
+      break;
 
-//     default:
-//       errorCode_ = ECMC_PV_GET_ERROR;
-//       return 0;
-//       break;
+    default:
+      errorCode_ = ECMC_PV_GET_ERROR;
+      return 0;
+      break;
 
-//   }
+  }
   
-//   errorCode_ = ECMC_PV_GET_ERROR;
-//   return retVal;
-// }
+  errorCode_ = ECMC_PV_GET_ERROR;
+  return retVal;
+}
 
-// void ecmcPv::putDouble(double value) {
+void ecmcPv::putDouble(double value) {
 
-//   PVScalarPtr pvScalar = NULL;
-//   switch(type_) {
-//     case scalar:
-//       putData_->putDouble(value);
-//       put_->put();      
-//       break;
+  PVScalarPtr pvScalar = NULL;
+  switch(type_) {
+    case scalar:
+      pvaClientPut_->getData()->putDouble(value);
+      pvaClientPut_->issuePut();
+      break;
 
-//     case structure:
-//       // Support enum BI/BO records      
-//       pvScalar = putData_->getPVStructure()->getSubField<PVScalar>("value.index");
-//       if(pvScalar) {
-//         pvScalar->putFrom<double>(value);
-//         put_->put();        
-//       } else {
-//         errorCode_ = ECMC_PV_GET_ERROR;
-//         return;
-//       }
-//       break;
+    case structure:
+      // Support enum BI/BO records
+      pvScalar = pvaClientPut_->getData()->getPVStructure()->getSubField<PVScalar>("value.index");
+      if(pvScalar) {
+        pvScalar->putFrom<double>(value);
+        pvaClientPut_->issuePut();
+      } else {
+        errorCode_ = ECMC_PV_GET_ERROR;
+        return;
+      }
+      break;
 
-//     case scalarArray:
-//       errorCode_ = ECMC_PV_GET_ERROR; 
-//       return;
-//       break;
+    case scalarArray:
+      errorCode_ = ECMC_PV_GET_ERROR; 
+      return;
+      break;
 
-//     default:
-//       errorCode_ = ECMC_PV_GET_ERROR;
-//       return;
-//       break;
-//   }
+    default:
+      errorCode_ = ECMC_PV_GET_ERROR;
+      return;
+      break;
+  }
 
-//   return;
-// }
+  return;
+}
 
-// int ecmcPv::validateType() {
+int ecmcPv::validateType(PvaClientMonitorDataPtr monData) {
 
   
-//   if(!getData_->hasValue()) {
-//     return 0;
-//   }
-//   PVScalarPtr pvScalar = NULL;  // Need to redo
+  if(!monData->hasValue()) {
+    return 0;
+  }
+  PVScalarPtr pvScalar = NULL;  // Need to redo
 
-//   switch(type_) {
-//     case scalar:
-//       if(getData_->isValueScalar()) {
-//         return 1;
-//       }
-//       else {
-//         return 0;
-//       }      
-//       break;
-//     case structure:
-//       // Support enum BI/BO records enum type (index, choices)
-//       if(!(getData_->getValue()->getField()->getID()=="enum_t")) {
-//         return 0;
-//       }
+  switch(type_) {
+    case scalar:
+      if(monData->isValueScalar()) {
+        return 1;
+      }
+      else {
+        return 0;
+      }      
+      break;
+    case structure:
+      // Support enum BI/BO records enum type (index, choices)
+      if(!(monData->getValue()->getField()->getID()=="enum_t")) {
+        return 0;
+      }
 
-//       pvScalar = getData_->getPVStructure()->getSubField<PVScalar>("value.index");
-//       if (pvScalar) {
-//         return 1;
-//       } else {
-//         return 0;
-//       }       
+      pvScalar = monData->getPVStructure()->getSubField<PVScalar>("value.index");
+      if (pvScalar) {
+        return 1;
+      } else {
+        return 0;
+      }       
 
-//       break;
-//     case scalarArray:
-//       return 0;
-//       break;
+      break;
+    case scalarArray:
+      return 0;
+      break;
 
-//     default:
-//       return 0;
-//       break;
+    default:
+      return 0;
+      break;
 
-//   }
-//   return 0;
-// }
+  }
+  return 0;
+}
 
-// // Static Avoid issues with std:to_string()
-// std::string ecmcPv::to_string(int value) {
-//   std::ostringstream os;
-//   os << value;
-//   return os.str();
-// }
+// Static Avoid issues with std:to_string()
+std::string ecmcPv::to_string(int value) {
+  std::ostringstream os;
+  os << value;
+  return os.str();
+}

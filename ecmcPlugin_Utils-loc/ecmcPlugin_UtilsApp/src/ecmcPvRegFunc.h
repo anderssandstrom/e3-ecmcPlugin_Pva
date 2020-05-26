@@ -14,6 +14,7 @@
 #include "ecmcPv.h"
 #include "ecmcPvDefs.h"
 #include "exprtk.hpp"
+#include "ecmcPluginClient.h"
 
 using namespace std;
 using namespace epics::pvData;
@@ -44,9 +45,9 @@ public:
 
   inline T operator()(parameter_list_t parameters)
   {
-    /*if (getEcmcEpicsIOCState()!=ECMC_IOC_STARTED_STATE) {    
-      return ECMC_PV_IOC_NOT_STARTED;
-    }*/
+    if (getEcmcEpicsIOCState()!=ECMC_IOC_STARTED_STATE) {    
+      return -ECMC_PV_IOC_NOT_STARTED;
+    }
 
     string_t pvName(parameters[0]);
     string_t providerName(parameters[1]);
@@ -56,26 +57,19 @@ public:
     int index = -1;
 
     try{
-      // Create object and append to "global" vector
-      //ecmcPv* pv = new ecmcPv(pvNameStr.c_str(),providerNameStr.c_str(),pvVector.size()+1);
-      
       //check if pv, provider combo already exist.. then erase and replace with new
-      printf("REG: %s (%s)\n", pvNameStr.c_str(), providerNameStr.c_str());
-
       for(unsigned int i = 0; i < pvVector.size(); ++i) {
         if(pvVector.at(i)->getChannelName() == pvNameStr && 
            pvVector.at(i)->getProviderName() == providerNameStr) {
           ecmcPvPtr pvTemp = pvVector.at(i);
           pvVector.at(i) = NULL;
-          //delete pvTemp;
           index = i;
           break;
         }
       }
 
-      printf("init!!!!\n");
-      PvaClientPtr pvaClient = PvaClient::get("pva ca");
-      printf("init!!!!\n");
+      PvaClientPtr pvaClient = PvaClient::get(providerNameStr);
+      
       // return handle to object (1 higher than index to avoid 0)      
       if(index>=0) {             // replace object      
        ecmcPvPtr pv = ecmcPv::create(pvaClient,pvNameStr,providerNameStr,"value",index+1);
