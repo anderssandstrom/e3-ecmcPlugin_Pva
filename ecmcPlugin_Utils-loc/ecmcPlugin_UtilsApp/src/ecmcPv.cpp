@@ -48,16 +48,17 @@ ecmcPv::ecmcPv(const std::string &channelName,
 
  void ecmcPv::init(PvaClientPtr const &pvaClient) {
 
-  pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
-  pvaClientChannel_->setStateChangeRequester(shared_from_this());
-  pvaClientChannel_->issueConnect();
+  // pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
+  // pvaClientChannel_->setStateChangeRequester(shared_from_this());
+  // pvaClientChannel_->issueConnect();
 
-  // // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
-   ecmcGetValMutex_ = epicsMutexCreate();
-   if(!ecmcGetValMutex_) {
-     throw std::runtime_error("Error: Create Mutex failed.");
-   }
+  // // // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
+  //  ecmcGetValMutex_ = epicsMutexCreate();
+  //  if(!ecmcGetValMutex_) {
+  //    throw std::runtime_error("Error: Create Mutex failed.");
+  //  }
 
+  pva_ = pvaClient;
   // Create worker thread
   std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
   cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
@@ -247,8 +248,17 @@ bool ecmcPv::connected() {
 }
 
  void ecmcPv::exeCmdThread() {
+  
+  pvaClientChannel_ = pva_->createChannel(channelName_,providerName_);
+  pvaClientChannel_->setStateChangeRequester(shared_from_this());
+  pvaClientChannel_->issueConnect();
 
-  // Now connected
+  // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
+  ecmcGetValMutex_ = epicsMutexCreate();
+  if(!ecmcGetValMutex_) {
+    throw std::runtime_error("Error: Create Mutex failed.");
+  }
+
   while(true) {
     busyLock_.clear();
     doCmdEvent_.wait();
