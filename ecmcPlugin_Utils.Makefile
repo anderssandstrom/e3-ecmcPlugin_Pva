@@ -46,16 +46,18 @@ APPDB:=$(APP)/Db
 APPSRC:=$(APP)/src
 
 USR_CFLAGS   += -shared -fPIC -Wall -Wextra
-USR_CPPFLAGS += -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=0 
+#USR_CPPFLAGS += -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=0 
+USR_CPPFLAGS += -std=c++11
 USR_LDFLAGS  += -lstdc++
 USR_LDFLAGS  += -L$(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)
 USR_LDFLAGS  += -lpvaClient 
 USR_LDFLAGS  += -lpvAccess 
 USR_LDFLAGS  += -lpvAccessCA
 USR_LDFLAGS  += -lnt
+USR_LDFLAGS  += -lpvData
 USR_LDFLAGS  += -lca
 USR_LDFLAGS  += -lCom
-USR_LDFLAGS  += -lpvData
+
 $(info $$USR_LDFLAGS is [${E3_LD_LIBRARY_PATH}])
 USR_INCLUDES += -I$(where_am_I)$(APPSRC)
 

@@ -13,13 +13,12 @@
 #ifndef ECMC_PV_H_
 #define ECMC_PV_H_
 
-#include <iostream>
-#include <epicsGetopt.h>
-// std::atomic_flag
-#include "pv/pvaClient.h"
 #include "ecmcPvDefs.h"
-#include "ecmcPluginClient.h"
 #include <atomic>  
+#include <iostream>
+// std::atomic_flag
+#include <pv/pvaClient.h>
+
 //#include "epicsThread.h"
 //#include "epicsMutex.h"
 
@@ -48,6 +47,8 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
          const std::string &providerName,
          const std::string &request, 
          int index);
+  ecmcPv();
+
   ~ecmcPv();
 
   static ecmcPvPtr create(PvaClientPtr const & pvaClient,
@@ -59,6 +60,8 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   PvaClientMonitorPtr getPvaClientMonitor();
   int    getError();
   int    reset();
+  void   start(const string &request);
+  void   stop();
   // Async Commads
   // void   getCmd();
   // void   putCmd(double value);
@@ -70,8 +73,7 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   // void   exeCmdThread();
   // void   monitorThread();
   std::string getChannelName();
-  std::string getProvider();
-  static ecmcPvPtr create(std::string pvName,std::string providerName, int index);
+  std::string getProviderName();
   virtual void monitorConnect(epics::pvData::Status const & status,
                               PvaClientMonitorPtr const & monitor,
                               epics::pvData::StructureConstPtr const & structure);

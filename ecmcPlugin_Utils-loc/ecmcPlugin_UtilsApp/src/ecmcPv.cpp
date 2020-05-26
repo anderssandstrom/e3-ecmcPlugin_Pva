@@ -58,6 +58,10 @@ ecmcPv::ecmcPv(const std::string &channelName,
 }
 
  void ecmcPv::init(PvaClientPtr const &pvaClient) {
+  //    printf("init!!!!\n");
+  // PvaClientPtr pvaClient = PvaClient::get("pva ca");
+  // printf("init!!!!\n");
+
 
   pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
   pvaClientChannel_->setStateChangeRequester(shared_from_this());
@@ -82,6 +86,9 @@ ecmcPv::ecmcPv(const std::string &channelName,
   // if( monThread_ == NULL) {
   //   throw std::runtime_error("Error: Failed create monitor worker thread.");
   // }
+}
+
+ecmcPv::ecmcPv() {
 }
 
 ecmcPvPtr ecmcPv::create(PvaClientPtr const & pvaClient,
@@ -138,6 +145,23 @@ PvaClientMonitorPtr ecmcPv::getPvaClientMonitor() {
   return pvaClientMonitor_;
 }
 
+void ecmcPv::stop()
+{
+  if(isStarted_) {
+    isStarted_ = false;
+    pvaClientMonitor_->stop();
+  }
+}
+
+void ecmcPv::start(const string &request)
+{
+  if(!channelConnected_ || !monitorConnected_)
+  {
+    cout << "notconnected\n";
+  }
+  isStarted_ = true;
+  pvaClientMonitor_->start(request);
+}
 
 ecmcPv::~ecmcPv() {
   // doCmdEvent_.signal();
@@ -150,7 +174,7 @@ std::string ecmcPv::getChannelName(){
   return channelName_;
 }
 
-std::string ecmcPv::getProvider() {
+std::string ecmcPv::getProviderName() {
   return providerName_;
 }
 
