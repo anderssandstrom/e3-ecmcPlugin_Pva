@@ -62,8 +62,11 @@ if(static.aoHandle > 0) {
   if(pv_connected(static.aoHandle)) {
     # Start new write if not busy
     if(not(pv_busy(static.aoHandle))) {
+      static.before3:=ec_get_time();
       error:=pv_put_async(static.aoHandle,static.AO);
+      static.after3:=ec_get_time();
       ${DBG=#}println('Put AO to PV  :', static.AO);
+      ${DBG=#}println('pv_reg_async AO exe time [ns] : ', static.after3-static.before3);
       ${DBG=#}println('Busy after pv_put_async(): ', pv_busy(static.aoHandle));
     }else {    
       ${DBG=#}println('Still busy pv_put_async()...');

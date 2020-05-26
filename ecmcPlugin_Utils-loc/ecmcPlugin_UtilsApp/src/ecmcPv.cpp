@@ -12,16 +12,16 @@
 #include "ecmcPv.h"
 
 // Start worker threads for each object
-// void f_cmd_exe(void *obj) {
-//   if(!obj) {
-//     printf("%s/%s:%d: Error: Worker thread PV object NULL..\n",
-//             __FILE__, __FUNCTION__, __LINE__);
-//     return;
-//   }
+void f_cmd_exe(void *obj) {
+  if(!obj) {
+    printf("%s/%s:%d: Error: Worker thread PV object NULL..\n",
+            __FILE__, __FUNCTION__, __LINE__);
+    return;
+  }
 
-//   ecmcPv * pvObj = (ecmcPv*)obj;
-//   pvObj->exeCmdThread();
-// }
+  ecmcPv * pvObj = (ecmcPv*)obj;
+  pvObj->exeCmdThread();
+}
 
 // // Start monitor thread
 // void f_monitor(void *obj) {
@@ -47,13 +47,13 @@ ecmcPv::ecmcPv(const std::string &channelName,
       putConnected_(false),
       isStarted_(false),
       typeValidated_(false),
-//      destructs_(false),
+      destructs_(false),
       index_(index),
       errorCode_(0), 
       valueLatestRead_(0),
-//      valueToWrite_(0),      
-      type_(scalar)
-//      cmd_(ECMC_PV_CMD_NONE)
+      valueToWrite_(0),      
+      type_(scalar),
+      cmd_(ECMC_PV_CMD_NONE)
 {
   busyLock_.test_and_set();
 }
@@ -73,12 +73,12 @@ ecmcPv::ecmcPv(const std::string &channelName,
      throw std::runtime_error("Error: Create Mutex failed.");
    }
 
-  // // Create worker thread
-  // std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
-  // cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
-  // if( cmdExeThread_ == NULL) {
-  //    throw std::runtime_error("Error: Failed cmd exe worker thread.");
-  // } 
+  // Create worker thread
+  std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
+  cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
+  if( cmdExeThread_ == NULL) {
+     throw std::runtime_error("Error: Failed cmd exe worker thread.");
+  } 
 
   // // Create monitor thread
   // threadname = "ecmc.mon.pv" + to_string(index_);
@@ -141,7 +141,7 @@ void ecmcPv::event(PvaClientMonitorPtr const & monitor)
 
 void ecmcPv::channelPutConnect (const epics::pvData::Status &status, PvaClientPutPtr const &clientPut)
 {
-  cout << "putConnect " << channelName_ << " status " << status << endl;
+  //cout << "putConnect " << channelName_ << " status " << status << endl;
   if(!status.isOK()) return;
   putConnected_ = true;
   busyLock_.clear();  
@@ -152,13 +152,13 @@ void ecmcPv::putDone(const epics::pvData::Status & status,
   // put cmd done.. allow new
   busyLock_.clear();
   if(!status.isOK()){
-    errorCode_ = ECMC_PV_GET_ERROR;   
+    errorCode_ = ECMC_PV_PUT_ERROR;   
   }  
 }
 
 void ecmcPv::channelStateChange(PvaClientChannelPtr const & channel, bool isConnected)
 {
-  cout << "channelStateChange " << channelName_ << " isConnected_ " << (isConnected ? "true" : "false") << endl;
+  //cout << "channelStateChange " << channelName_ << " isConnected_ " << (isConnected ? "true" : "false") << endl;
   channelConnected_ = isConnected;
   if(isConnected) {
     if(!pvaClientMonitor_) {
@@ -197,9 +197,9 @@ void ecmcPv::start(const string &request)
 }
 
 ecmcPv::~ecmcPv() {
-  //  destructs_ = 1;
-  //  doCmdEvent_.signal();
-  //  epicsThreadMustJoin(cmdExeThread_);
+    destructs_ = 1;
+    doCmdEvent_.signal();
+    epicsThreadMustJoin(cmdExeThread_);
 }
 
 std::string ecmcPv::getChannelName(){
@@ -275,11 +275,11 @@ void ecmcPv::putCmd(double value) {
     throw std::runtime_error("Error: Object busy. Put operation to "+ channelName_ + ") failed." );
   }  
   
-  //cmd_ =  ECMC_PV_CMD_PUT;
-  //valueToWrite_ = value;
-  putDouble(value);
-  // Execute cmd
-  //doCmdEvent_.signal();
+  cmd_ =  ECMC_PV_CMD_PUT;
+  valueToWrite_ = value;
+  
+  //Execute cmd
+  doCmdEvent_.signal();
 
   return;
 }
@@ -299,58 +299,45 @@ bool ecmcPv::connected() {
   return channelConnected_ && monitorConnected_  && isStarted_ && putConnected_ && typeValidated_;
 }
 
-//  void ecmcPv::exeCmdThread() {
-//   std::cerr << "Registering PV for: " << channelName_ << "\n";
-//   // Retry untill success..
-//   // while(!connected() ) {
-//   //   try{
-//   //     connect();      
-//   //   }
-//   //   catch(std::exception &e){
-//   //     std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
-//   //               << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
-//   //     errorCode_ = ECMC_PV_REG_ERROR;
-//   //     epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
-//   //   }
-//   // }
+ void ecmcPv::exeCmdThread() {
+  // Retry untill success..
+  // while(!connected() ) {
+  //   try{
+  //     connect();      
+  //   }
+  //   catch(std::exception &e){
+  //     std::cerr << "Error: Connect failed: " << e.what() << "Try to reconnect in " 
+  //               << to_string(ECMC_PV_TIME_BETWEEN_RECONNECT) << "s\n";
+  //     errorCode_ = ECMC_PV_REG_ERROR;
+  //     epicsThreadSleep(ECMC_PV_TIME_BETWEEN_RECONNECT);
+  //   }
+  // }
 
-//   // Now connected
-//   while(true) {
-//     busyLock_.clear();
-//     doCmdEvent_.wait();
-//     reset();
-//     if(destructs_) {
-//       return; 
-//     }
+  // Now connected
+  while(true) {
+    busyLock_.clear();
+    doCmdEvent_.wait();
+    reset();
+    if(destructs_) {
+      return; 
+    }
 
-//     switch(cmd_) {
-//       case ECMC_PV_CMD_GET:  // Normally not used.. Use monitor instead
-//         try{
-//           if(connected()) {
-//             epicsMutexLock(ecmcGetValMutex_);
-//             valueLatestRead_ = getDouble();
-//             epicsMutexUnlock(ecmcGetValMutex_);                        
-//           }
-//         }
-//         catch(std::exception &e){
-//           errorCode_ = ECMC_PV_GET_ERROR;
-//         }
-//         break;
-//       case ECMC_PV_CMD_PUT:
-//         try{
-//           if(connected()) {
-//             putDouble(valueToWrite_);            
-//           }
-//         }
-//         catch(std::exception &e){
-//           errorCode_ = ECMC_PV_PUT_ERROR;
-//         }
-//         break;
-//       default:
-//         break;
-//     }    
-//   } 
-// }
+    switch(cmd_) {
+      case ECMC_PV_CMD_PUT:
+        try{
+          if(connected()) {
+            putDouble(valueToWrite_);            
+          }
+        }
+        catch(std::exception &e){
+          errorCode_ = ECMC_PV_PUT_ERROR;
+        }
+        break;
+      default:
+        break;
+    }    
+  } 
+}
 
 //  // Monitor thread
 // void ecmcPv::monitorThread() {
@@ -508,6 +495,7 @@ void ecmcPv::putDouble(double value) {
   switch(type_) {
     case scalar:
       pvaClientPut_->getData()->putDouble(value);
+      //pvaClientPut_->put();
       pvaClientPut_->issuePut();
       break;
 
@@ -516,6 +504,7 @@ void ecmcPv::putDouble(double value) {
       pvScalar = pvaClientPut_->getData()->getPVStructure()->getSubField<PVScalar>("value.index");
       if(pvScalar) {
         pvScalar->putFrom<double>(value);
+        //pvaClientPut_->put();
         pvaClientPut_->issuePut();
       } else {
         errorCode_ = ECMC_PV_GET_ERROR;

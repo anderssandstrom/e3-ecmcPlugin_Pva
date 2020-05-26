@@ -70,7 +70,7 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   double getLastReadValue();
   bool   busy();
   bool   connected();
-  //void   exeCmdThread();
+  void   exeCmdThread();
   // void   monitorThread();
   std::string getChannelName();
   std::string getProviderName();
@@ -102,16 +102,16 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   bool putConnected_;
   bool isStarted_;
   bool typeValidated_;
-  //bool                  destructs_;
+  bool                  destructs_;
   int                   index_;
   int                   errorCode_;  
   double                valueLatestRead_;
-  //double                valueToWrite_;  
+  double                valueToWrite_;  
   Type                  type_;  
   // Thread related
-  //epicsEvent            doCmdEvent_;
+  epicsEvent            doCmdEvent_;
   
-  //ecmc_pva_cmd          cmd_;
+  ecmc_pva_cmd          cmd_;
   std::atomic_flag      busyLock_;  
 
   //int                   reconnectCounter_;
@@ -132,7 +132,7 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   PvaClientMonitorPtr pvaClientMonitor_;
   //PvaClientMonitorDataPtr monitorData_;
   
-  //epicsThreadId         cmdExeThread_;
+  epicsThreadId         cmdExeThread_;
   //epicsThreadId         monThread_;
   epicsMutexId          ecmcGetValMutex_;
   
