@@ -50,7 +50,7 @@ int getError(int handle) {
 // Normal plc functions
 int exeGetDataCmd(int handle) {
   try{
-    pvVector.at(handle-1)->getCmd();
+    //pvVector.at(handle-1)->getCmd();
     return 0;
   }    
   catch(std::exception &e){
@@ -63,7 +63,7 @@ int exeGetDataCmd(int handle) {
 // Normal plc functions
 int exePutDataCmd(int handle, double value) {
   try{
-    pvVector.at(handle-1)->putCmd(value);
+    //pvVector.at(handle-1)->putCmd(value);
     return 0;
   }    
   catch(std::exception &e){

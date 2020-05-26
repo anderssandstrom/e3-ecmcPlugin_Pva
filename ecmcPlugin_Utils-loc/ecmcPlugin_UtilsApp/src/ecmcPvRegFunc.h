@@ -10,10 +10,10 @@
 *
 \*************************************************************************/
 
-#include "exprtk.hpp"
 #include "pva/client.h"
 #include "ecmcPv.h"
 #include "ecmcPvDefs.h"
+#include "exprtk.hpp"
 
 vector<ecmcPvPtr> pvVector;
 
@@ -56,7 +56,7 @@ public:
       //check if pv, provider combo already exist.. then erase and replace with new
       
       for(unsigned int i = 0; i < pvVector.size(); ++i) {
-        if(pvVector.at(i)->getPvName() == pvNameStr && 
+        if(pvVector.at(i)->getChannelName() == pvNameStr && 
            pvVector.at(i)->getProvider() == providerNameStr) {
           ecmcPvPtr pvTemp = pvVector.at(i);
           pvVector.at(i) = NULL;
@@ -67,9 +67,9 @@ public:
       }
 
       // return handle to object (1 higher than index to avoid 0)
-
-      if(index>=0) {             // replace object
-       ecmcPvPtr pv = ecmcPv::create(pvNameStr.c_str(),providerNameStr.c_str(),index+1);
+      PvaClientPtr pva= PvaClient::get(providerNameStr);
+      if(index>=0) {             // replace object      
+       ecmcPvPtr pv = ecmcPv::create(pva,pvNameStr.c_str(),providerNameStr.c_str(),"value",index+1);
         pvVector.at(index) = pv; 
         return index + 1;        // Start count handles from 1
       } else {                   // Add
