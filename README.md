@@ -37,14 +37,35 @@ The example in the "iocsh" dir shows how to use the pva functions. The example d
 * IOC_DUMMY:BI
 * IOC_DUMMY:BO
 
-Start ecmc-ioc (from iocsh dir):
+Start the "ecmc-ioc" (from iocsh dir):
 ```
 $ iocsh.bash ecmc_ioc.script
 ```
-Start external-ioc (from iocsh dir):
+Start the "external-ioc" (from iocsh dir):
 ```
 $ iocsh.bash external_ioc.script
 ```
+
+The "ecmc-ioc" will now connect to, read and write pvs in the "external-ioc" and generates some printouts:
+```
+Get AI from PV: 131.00000
+Put AO to PV  : 132.00000
+pv_put_asyn AO exe time [ns] : 10240.00000
+Busy after pv_put_asyn():    1.00000
+Get BI from PV:   0.00000
+Put BO to PV  :   1.00000
+Busy after pv_put_asyn():    1.00000, err:    0.00000
+pv_value AI exe time [ns] : 4096.00000
+Get AI from PV: 132.00000
+Put AO to PV  : 133.00000
+pv_put_asyn AO exe time [ns] : 10240.00000
+Busy after pv_put_asyn():    1.00000
+Get BI from PV:   1.00000
+Put BO to PV  :   0.00000
+
+```
+
+
 
 ## EPICS utils:
   * started = ioc_get_started() : ecmc IOC up and running
