@@ -1,6 +1,6 @@
 ##############################################################################
 ## Load test records
-dbLoadRecords("./db/dummy.db","P=IOC_DUMMY:")
+dbLoadRecords("./db/external.db","P=IOC_DUMMY:")
 
 iocInit
 

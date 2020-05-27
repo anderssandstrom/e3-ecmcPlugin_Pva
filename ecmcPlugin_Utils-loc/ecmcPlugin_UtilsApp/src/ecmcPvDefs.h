@@ -15,7 +15,7 @@
 
 #define ECMC_IOC_STARTED_STATE 16
 
-#define ECMC_PV_TIME_BETWEEN_RECONNECT 2
+#define ECMC_MAX_PVS_DEFAULT 8
 
 #define ECMC_PV_REG_ERROR 1
 #define ECMC_PV_GET_ERROR 2
@@ -25,10 +25,11 @@
 #define ECMC_PV_IOC_NOT_STARTED 6
 #define ECMC_PV_BUSY 7
 #define ECMC_PV_TYPE_NOT_SUPPORTED 8
+#define ECMC_PV_NOT_CONNECTED 9
+#define ECMC_PV_INIT_ERROR 10
 
-#define ECMC_PV_PLC_CMD_PV_REG_ASYNC "pv_reg_async"
-#define ECMC_PV_PLC_CMD_PV_GET_ASYNC "pv_get_async"
-#define ECMC_PV_PLC_CMD_PV_PUT_ASYNC "pv_put_async"
+#define ECMC_PV_PLC_CMD_PV_REG_ASYN "pv_reg_asyn"
+#define ECMC_PV_PLC_CMD_PV_PUT_ASYN "pv_put_asyn"
 #define ECMC_PV_PLC_CMD_PV_GET_VALUE "pv_value"
 #define ECMC_PV_PLC_CMD_PV_GET_BUSY "pv_busy"
 #define ECMC_PV_PLC_CMD_PV_GET_ERR "pv_err"
