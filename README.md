@@ -16,7 +16,7 @@ A monitor is continiously updating the current value of the pv and making int ac
 ### PLC-functions:
   * handle = pv_reg_async( pvName, provider ) : Exe. async cmd to register PV. Returns handle to PV-object or error (if < 0). Provider needs to be set to either "pva" or "ca" (ca to be able to access pv:s in EPICS 3.* IOC:s).  
   * error  = pv_put_async( handle, value ) : Exe async pv put command.  Retruns error-code.
-  * value  = pv_value( handle ): Get value from last monitor update.
+  * value  = pv_get( handle ): Get value from last monitor update.
   * busy   = pv_busy( handle ) : Return if PV-object is busy (busy if a pv_put_asyn() or a pv_reg_asyn() async command is executing).
   * error  = pv_err( handle ) : Returns error code of PV-objects last command (error > 0).
   * connected = pv_connected(<handle>) : Return if pv is connected.
@@ -49,20 +49,20 @@ $ iocsh.bash external_ioc.script
 
 The "ecmc-ioc" will now connect to, read and write pvs in the "external-ioc" and generates some printouts:
 ```
-Get AI from PV: 131.00000
-Put AO to PV  : 132.00000
-pv_put_asyn AO exe time [ns] : 10240.00000
-Busy after pv_put_asyn():    1.00000
-Get BI from PV:   0.00000
-Put BO to PV  :   1.00000
-Busy after pv_put_asyn():    1.00000, err:    0.00000
-pv_value AI exe time [ns] : 4096.00000
-Get AI from PV: 132.00000
-Put AO to PV  : 133.00000
+Get AI from PV: 117.00000
+Put AO to PV  : 118.00000
 pv_put_asyn AO exe time [ns] : 10240.00000
 Busy after pv_put_asyn():    1.00000
 Get BI from PV:   1.00000
 Put BO to PV  :   0.00000
+Busy after pv_put_asyn():    1.00000, err:    0.00000
+pv_get AI exe time [ns] : 4096.00000
+Get AI from PV: 118.00000
+Put AO to PV  : 119.00000
+pv_put_asyn AO exe time [ns] : 10240.00000
+Busy after pv_put_asyn():    1.00000
+Get BI from PV:   0.00000
+Put BO to PV  :   1.00000
 
 ```
 
@@ -81,60 +81,60 @@ Plugin info:
   Index                = 0
   Name                 = ecmcPlugin_Utils
   Description          = Utility plugin for use with ecmc. Funcs: pvAccess, ioc status.
-  Option description   = No options
+  Option description   = MAX_PV_COUNT=<count> : Set max number of pvs to connect to (defaults to 8).
   Filename             = /epics/base-7.0.3.1/require/3.1.2/siteMods/ecmcPlugin_Utils/master/lib/linux-arm/libecmcPlugin_Utils.so
-  Config string        = EMPTY
+  Config string        = MAX_PV_COUNT=5
   Version              = 2
   Interface version    = 65536 (ecmc = 65536)
      max plc funcs     = 64
      max plc func args = 10
      max plc consts    = 64
-  Construct func       = @0xb5019ae4
-  Enter realtime func  = @0xb50199f0
-  Exit realtime func   = @0xb50199f8
-  Realtime func        = @0xb50199e8
-  Destruct func        = @0xb5019a00
-  dlhandle             = @0xdee2e8
+  Construct func       = @0xb5023b4c
+  Enter realtime func  = @0xb5023a58
+  Exit realtime func   = @0xb5023a60
+  Realtime func        = @0xb5023a50
+  Destruct func        = @0xb5023a68
+  dlhandle             = @0x1844100
   Plc functions:
     funcs[00]:
       Name       = "pv_reg_asyn();"
       Desc       = handle = pv_reg_asyn(<pv name>, <provider name pva/ca>) : register new pv.
-      func       = @0xe02440
+      func       = @0x18581d8
     funcs[01]:
       Name       = "pv_put_asyn(arg0, arg1);"
       Desc       = error = pv_put_asyn(<handle>, <value>) : Execute async pv_put cmd.
       Arg count  = 2
-      func       = @0xb5019a24
+      func       = @0xb5023a8c
     funcs[02]:
-      Name       = "pv_value(arg0);"
-      Desc       = value = pv_value(<handle>) : Get result from last pv_get_async() or pv_put_async() cmd.
+      Name       = "pv_get(arg0);"
+      Desc       = value = pv_get(<handle>) : Get value of registered pv (updated by monitor).
       Arg count  = 1
-      func       = @0xb5019a44
+      func       = @0xb5023aac
     funcs[03]:
       Name       = "pv_busy(arg0);"
       Desc       = busy = pv_busy(<handle>) : Get status of last async command (pv_reg_asyn(), pv_put_asyn()).
       Arg count  = 1
-      func       = @0xb5019a50
+      func       = @0xb5023ab8
     funcs[04]:
       Name       = "pv_err(arg0);"
       Desc       = error = pv_err(<handle>) : Get error code.
       Arg count  = 1
-      func       = @0xb5019a88
+      func       = @0xb5023af0
     funcs[05]:
       Name       = "pv_connected(arg0);"
       Desc       = connected = pv_connected(<handle>) : Get pv connected.
       Arg count  = 1
-      func       = @0xb5019a6c
+      func       = @0xb5023ad4
     funcs[06]:
       Name       = "ioc_get_state();"
       Desc       = state = ioc_get_state() : Get ecmc epics ioc state.
       Arg count  = 0
-      func       = @0xb5019ad0
+      func       = @0xb5023b38
     funcs[07]:
       Name       = "ioc_get_started();"
       Desc       = started = ioc_get_started() : Get ecmc epics ioc started.
       Arg count  = 0
-      func       = @0xb5019aa4
+      func       = @0xb5023b0c
   Plc constants:
 
 ```

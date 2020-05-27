@@ -6,7 +6,7 @@
 # Workflow for a "pv_get()" operation: (update automatically from monitor)
 #  1: Regsiter PV with pv_reg_asyn() command (returns handle)
 #  2: Wait for pv_reg_asyn() to finish (pv_busy(), pv_conencted())
-#  3: Get last read value with pv_value().
+#  3: Get last read value with pv_get().
 #  4: Goto 3 (read again)
 #
 # Workflow for a "pv_put()" operation:
@@ -40,9 +40,9 @@ if(static.aiHandle > 0) {
   if(pv_connected(static.aiHandle)) {
     # Value auto update by monitor.
     static.before1:=ec_get_time();
-    var retPvGet:=pv_value(static.aiHandle);    
+    var retPvGet:=pv_get(static.aiHandle);    
     static.after1:=ec_get_time();
-    ${DBG=#}println('pv_value AI exe time [ns] : ', static.after1-static.before1);
+    ${DBG=#}println('pv_get AI exe time [ns] : ', static.after1-static.before1);
     ${DBG=#}println('Get AI from PV:', retPvGet);
   };
 };
@@ -97,7 +97,7 @@ if(ioc_get_started() and static.biHandle=0) {
 # Read value of "IOC_DUMMY:BI" when registered (auto updates via monitor)
 if(static.biHandle > 0) {
   if(pv_connected(static.biHandle)) {
-    var retPvBIGet:=pv_value(static.biHandle);
+    var retPvBIGet:=pv_get(static.biHandle);
     ${DBG=#}println('Get BI from PV:', retPvBIGet);    
   };
 };
