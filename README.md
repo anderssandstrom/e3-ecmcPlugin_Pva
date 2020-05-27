@@ -11,25 +11,25 @@ Implements functions for accessing pv:s over pvAccess from ecmc plc:s.
 Registration and writes are implementad as async commands in order to minimize blocking time of ecmc realtime thread. Even though the "pvaClient::issue*" commands are non blocking they were idetified to consume to much time. Therefore both registration and writing commands are handled async by a low prio worker thread. The pv_busy() command will return high as long as the worker thread is procssing and low when done (see examples in "iocsh" dir).
 
 ### Reading values:
-A monitor is continiously updating the current value of the pv and making int accessible to read from a ecmc by "pv_value()" command in an ecmc-plc.
+A monitor is continiously updating the current value of the pv and making it accessible to read from a ecmc by "pv_get()" command in an ecmc-plc.
 
 ### PLC-functions:
   * handle = pv_reg_async( pvName, provider ) : Exe. async cmd to register PV. Returns handle to PV-object or error (if < 0). Provider needs to be set to either "pva" or "ca" (ca to be able to access pv:s in EPICS 3.* IOC:s).  
   * error  = pv_put_async( handle, value ) : Exe async pv put command.  Retruns error-code.
-  * value  = pv_get( handle ): Get value from last monitor update.
+  * value  = pv_get( handle ): Get pv value from last monitor update.
   * busy   = pv_busy( handle ) : Return if PV-object is busy (busy if a pv_put_asyn() or a pv_reg_asyn() async command is executing).
   * error  = pv_err( handle ) : Returns error code of PV-objects last command (error > 0).
   * connected = pv_connected(<handle>) : Return if pv is connected.
 
 ### Config options
-MAX_PV_COUNT=<count> : Sets the maximum number of pv:s to register. These pv objects will be allocated when module is loaded (before realtime).
+MAX_PV_COUNT=<count> : Sets the maximum number of pv:s to register. These pv objects will be allocated when module is loaded (before realtime). This setting defaults to 8.
 
 ### Record support
 The functions currently only support scalar values. Value field of following record types have been tested:
 * AI
 * AO
-* BI
-* BO 
+* BI (enum_t: return index of enum value)
+* BO (enum_t: sets index of enum value)
 
 ### Example
 The example in the "iocsh" dir shows how to use the pva functions. The example demonstartes how a ecmc plc (in an ecmc ioc) can connect to an external ioc. The ecmc plc registers, writes and reads values from the folowing records:
