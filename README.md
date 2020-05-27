@@ -20,7 +20,6 @@ plc.
   * value  = pv_value( handle ): Get value from last monitor update.
   * busy   = pv_busy( handle ) : Return if PV-object is busy (busy if a put or a reg async commnd is executing).
   * error  = pv_err( handle ) : Returns error code of PV-object (error > 0).
-  * pv_rst( handle ) : Reset error of PV-object. Normally not needed to execute.
   * connected = pv_connected(<handle>) : Return if pv is connected.
 
 ### Record support
@@ -89,56 +88,52 @@ Plugin info:
      max plc funcs     = 64
      max plc func args = 10
      max plc consts    = 64
-  Construct func       = @0xb4e22b7c
-  Enter realtime func  = @0xb4e22a60
-  Exit realtime func   = @0xb4e22a68
-  Realtime func        = @0xb4e22a58
-  Destruct func        = @0xb4e22a70
-  dlhandle             = @0x185b050
+  Construct func       = @0xb5019ae4
+  Enter realtime func  = @0xb50199f0
+  Exit realtime func   = @0xb50199f8
+  Realtime func        = @0xb50199e8
+  Destruct func        = @0xb5019a00
+  dlhandle             = @0xdee2e8
   Plc functions:
     funcs[00]:
       Name       = "pv_reg_asyn();"
       Desc       = handle = pv_reg_asyn(<pv name>, <provider name pva/ca>) : register new pv.
-      func       = @0x186f3b8
+      func       = @0xe02440
     funcs[01]:
       Name       = "pv_put_asyn(arg0, arg1);"
       Desc       = error = pv_put_asyn(<handle>, <value>) : Execute async pv_put cmd.
       Arg count  = 2
-      func       = @0xb4e22a94
+      func       = @0xb5019a24
     funcs[02]:
       Name       = "pv_value(arg0);"
       Desc       = value = pv_value(<handle>) : Get result from last pv_get_async() or pv_put_async() cmd.
       Arg count  = 1
-      func       = @0xb4e22ab4
+      func       = @0xb5019a44
     funcs[03]:
       Name       = "pv_busy(arg0);"
       Desc       = busy = pv_busy(<handle>) : Get status of last async command (pv_reg_asyn(), pv_put_asyn()).
       Arg count  = 1
-      func       = @0xb4e22ac0
+      func       = @0xb5019a50
     funcs[04]:
       Name       = "pv_err(arg0);"
       Desc       = error = pv_err(<handle>) : Get error code.
       Arg count  = 1
-      func       = @0xb4e22af8
+      func       = @0xb5019a88
     funcs[05]:
-      Name       = "pv_rst(arg0);"
-      Desc       = pv_rst(<handle>) : Reset error code.
-      Arg count  = 1
-      func       = @0xb4e22b14
-    funcs[06]:
       Name       = "pv_connected(arg0);"
       Desc       = connected = pv_connected(<handle>) : Get pv connected.
       Arg count  = 1
-      func       = @0xb4e22adc
-    funcs[07]:
+      func       = @0xb5019a6c
+    funcs[06]:
       Name       = "ioc_get_state();"
       Desc       = state = ioc_get_state() : Get ecmc epics ioc state.
       Arg count  = 0
-      func       = @0xb4e22b68
-    funcs[08]:
+      func       = @0xb5019ad0
+    funcs[07]:
       Name       = "ioc_get_started();"
       Desc       = started = ioc_get_started() : Get ecmc epics ioc started.
       Arg count  = 0
-      func       = @0xb4e22b38
+      func       = @0xb5019aa4
   Plc constants:
+
 ```

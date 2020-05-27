@@ -41,17 +41,6 @@ void* getPvRegObj() {
   return (void*) pvRegObj;
 }
 
-void resetError(int handle) {
-  try{
-    pvVector.at(handle-1)->reset();
-  }    
-  catch(std::exception &e){
-    std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_RST_ERR "(): " << e.what() << "\n";
-    return;
-  }
-  return;
-}
-
 int getError(int handle) {
   try{
     return pvVector.at(handle-1)->getError();
