@@ -1,5 +1,8 @@
 ##############################################################################
-## Example: Configuraftion for running ecmc Utils plugin
+## Example: Configuraftion for running ecmc Utils plugin.
+## Demonstartes how to use pvAccess from ecmc plc:s
+##  1. run this ecmc ioc: iocsh.bash ecmc_ioc.script
+##  2. run an external dummy ioc: iocsh.bash external_ioc.script
 ##############################################################################
 
 ## Initiation:
@@ -47,11 +50,7 @@ ${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILN
 
 ##############################################################################
 ## PLC 0: Generate a sine wave at 10Hz
-$(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=10,FILE=./plc/plc_pva_dummy_slim.plc, PLC_MACROS='DBG=,PLC_ID=0'")
-
-##############################################################################
-## Load test records
-dbLoadRecords("./db/ai.db","P=$(IOC):,PORT=MC_CPU1,T_SMP_MS=10")
+$(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=100,FILE=./plc/ecmc_pva.plc, PLC_MACROS='DBG=,PLC_ID=0'")
 
 ##############################################################################
 ############# Configure diagnostics:
