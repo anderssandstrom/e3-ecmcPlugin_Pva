@@ -11,8 +11,7 @@ Implements functions for accessing pv:s over pvAccess from ecmc plc:s.
 Registration and writes are implementad as async commands in order to minimize blocking time of ecmc realtime thread. Even though the "pvaClient::issue*" commands are non blocking they were idetified to consume to much time. Therefore both registration and writing commands are handled async by a low prio worker thread. The pv_busy() command will return high as long as the worker thread is procssing and low when done (see examples in "iocsh" dir).
 
 ### Reading values:
-A monitor is setup that is updating the current value of the pv continiously and making int accessible to read from a ecmc 
-plc.
+A monitor is continiously updating the current value of the pv and making int accessible to read from a ecmc by "pv_value()" command in an ecmc-plc.
 
 ### PLC-functions:
   * handle = pv_reg_async( pvName, provider ) : Exe. async cmd to register PV. Returns handle to PV-object or error (if < 0). Provider needs to be set to either "pva" or "ca" (ca to be able to access pv:s in EPICS 3.* IOC:s).  
