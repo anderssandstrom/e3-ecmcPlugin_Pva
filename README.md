@@ -7,14 +7,14 @@ A shared library utility functions loadable into ecmc.
 ## PvAccess 
 Implements functions for accessing pv:s over pvAccess from ecmc plc:s.
 
-Registering and writing pvs:
+### Registering and writing pvs:
 Registration and writes are implementad as async commands in order to minimize blocking time of ecmc realtime thread.
 
-Reading values:
+### Reading values:
 A monitor is setup that is updating the current value of the pv continiously and making int accessible to read from a ecmc 
 plc.
 
-PLC-functions:
+### PLC-functions:
   * handle = pv_reg_async( pvName, provider ) : Exe. async cmd to register PV. Returns handle to PV-object or error (if < 0). Provider needs to be set to either "pva" or "ca" (ca to be able to access pv:s in EPICS 3.* IOC:s).  
   * error  = pv_put_async( handle, value ) : Exe async pv put command.  Retruns error-code.
   * value  = pv_value( handle ): Get value from last monitor update.
@@ -22,6 +22,29 @@ PLC-functions:
   * error  = pv_err( handle ) : Returns error code of PV-object (error > 0).
   * pv_rst( handle ) : Reset error of PV-object. Normally not needed to execute.
   * connected = pv_connected(<handle>) : Return if pv is connected.
+
+### Record support
+The functions currently only support scalar values. Value field of following record types have been tested:
+* AI
+* AO
+* BI
+* BO 
+
+### Example
+The example in the "iocsh" dir shows how to use the pva functions. The example demonstartes how a ecmc plc (in an ecmc ioc) can connect to an external ioc. The ecmc plc registers, writes and reads values from the folowing records:
+* IOC_DUMMY:AI
+* IOC_DUMMY:AO
+* IOC_DUMMY:BI
+* IOC_DUMMY:BO
+
+Start ecmc-ioc (from iocsh dir):
+```
+$ iocsh.bash ecmc_ioc.script
+```
+Start external-ioc (from iocsh dir):
+```
+$ iocsh.bash external_ioc.script
+```
 
 ## EPICS utils:
   * started = ioc_get_started() : ecmc IOC up and running
