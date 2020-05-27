@@ -65,11 +65,15 @@ Put BO to PV  :   0.00000
 
 ```
 
-
-
 ## EPICS utils:
   * started = ioc_get_started() : ecmc IOC up and running
   * state = ioc_get_state()   : ecmc IOC state (hook)
+
+
+## Setup
+```
+$ make install
+```
 
 ## Plugin Info
 ```
