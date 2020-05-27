@@ -18,6 +18,7 @@
 extern "C" {
 # endif  // ifdef __cplusplus
 
+  int    initPvs();
   void*  getPvRegObj();
   int    exePutDataCmd(int handle, double data);
   double getLastValue(int handle);

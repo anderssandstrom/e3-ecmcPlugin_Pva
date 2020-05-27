@@ -19,6 +19,22 @@
 #include "ecmcPvRegFunc.h"
 
 pvreg<double>*  pvRegObj;
+int maxPvs = ECMC_MAX_PVS_DEFAULT;
+
+// Pre allocate objects at construct to minimize time jitter in runtime
+int initPvs() {
+  try{
+    for(int i = 0; i < maxPvs; ++i ) {
+      ecmcPvPtr pv = ecmcPv::create("DummyName","DummyProvider","value",i+1);
+      pvVector.push_back(pv);
+    }
+  }
+  catch(std::exception &e){
+    std::cerr << "Error:  init: " << e.what() << "\n";
+    return ECMC_PV_INIT_ERROR;
+  }
+  return 0;
+}
 
 void* getPvRegObj() {
   pvRegObj = new pvreg<double>();

@@ -55,7 +55,7 @@ public:
     std::string providerNameStr(&providerName[0]);
     
     int index = -1;
-
+    bool alreadyReg = false;
     try{
       //check if pv, provider combo already exist.. then erase and replace with new
       for(unsigned int i = 0; i < pvVector.size(); ++i) {
@@ -64,21 +64,34 @@ public:
           ecmcPvPtr pvTemp = pvVector.at(i);
           pvVector.at(i) = NULL;
           index = i;
+          alreadyReg = true;
           break;
         }
       }
 
-      PvaClientPtr pvaClient = PvaClient::get(providerNameStr);
-      
+      if(!alreadyReg) {
+        // Pick first free
+        for(unsigned int i = 0; i < pvVector.size(); ++i) {
+          if(!(pvVector.at(i)->inUse())) {
+            index = i;
+            break;
+          }
+        }
+      }
+
+      PvaClientPtr pvaClient = PvaClient::get(providerNameStr);            
       // return handle to object (1 higher than index to avoid 0)      
-      if(index>=0) {             // replace object      
-       ecmcPvPtr pv = ecmcPv::create(pvaClient,pvNameStr,providerNameStr,"value",index+1);
-        pvVector.at(index) = pv; 
+      if(index>=0) {             // replace object
+        //ecmcPvPtr pv = ecmcPv::create(pvaClient,pvNameStr,providerNameStr,"value",index+1);
+        //pvVector.at(index) = pv; 
+        pvVector.at(index)->regCmd(pvaClient,pvNameStr,providerNameStr,"value");
+        //std::cerr << "Adding Pv : " << pvNameStr << " at index: " << index <<  "\n";
         return index + 1;        // Start count handles from 1
-      } else {                   // Add
-        ecmcPvPtr pv = ecmcPv::create(pvaClient,pvNameStr,providerNameStr,"value",pvVector.size()+1);
-        pvVector.push_back(pv);  
-        return pvVector.size();
+      } else {                   // Not found or no free objects to use..           
+        std::cerr << "Error: " ECMC_PV_PLC_CMD_PV_REG_ASYN  "(): failed for pv" << pvNameStr << "\n";
+        //ecmcPvPtr pv = ecmcPv::create(pvaClient,pvNameStr,providerNameStr,"value",pvVector.size()+1);
+        //pvVector.push_back(pv);
+        return -ECMC_PV_REG_ERROR;
       }
     }    
     catch(std::exception &e){

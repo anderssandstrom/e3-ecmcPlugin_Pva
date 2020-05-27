@@ -46,8 +46,7 @@ extern struct ecmcPluginData pluginDataDef;
  **/
 int pvaConstruct(char *configStr)
 {
-  //This module is only allowed to load once
-  
+  //This module is only allowed to load once  
   if(loaded && !ECMC_PLUGIN_ALLOW_MULTI_LOAD) {
     printf("%s/%s:%d: Error: Module already loaded (0x%x).\n",__FILE__, __FUNCTION__,
            __LINE__,ECMC_PLUGIN_ERROR_ALREADY_LOADED);
@@ -59,7 +58,7 @@ int pvaConstruct(char *configStr)
   // Add refs to generic funcs in runtime since objects
   pluginDataDef.funcs[0].funcGenericObj = getPvRegObj();  
   loaded = 1;
-  return 0;
+  return initPvs();
 }
 
 /** Optional function.
@@ -232,7 +231,7 @@ struct ecmcPluginData pluginDataDef = {
   .funcs[3] =
       { /*----pv_get_busy----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_BUSY,
-        .funcDesc = "busy = "  ECMC_PV_PLC_CMD_PV_GET_BUSY "(<handle>) : Get status of last async command (pv_reg_async(), pv_get_async(), pv_put_async()).",
+        .funcDesc = "busy = "  ECMC_PV_PLC_CMD_PV_GET_BUSY "(<handle>) : Get status of last async command (pv_reg_asyn(), pv_put_asyn()).",
         .funcArg0 = NULL,
         .funcArg1 = pvaGetBusy,
         .funcArg2 = NULL,

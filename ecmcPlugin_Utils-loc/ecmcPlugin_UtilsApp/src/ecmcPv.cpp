@@ -8,6 +8,17 @@
 *  Created on: May 12, 2020
 *      Author: anderssandstrom
 *
+*  Pv access support for ecmc:
+*  * pv_reg_asyn()  : async command to register a pv
+*  * pv_put_asyn()  : async command to write to a pv
+*  * pv_get_value() : return last value (from monitor)
+*  The async commands are executed in a worker thread. This was needed
+*  since even the "issue*()" commands was found to block for to 
+*  long time. 
+*
+*  Implementation is based on examples found in:
+*  https://github.com/epics-base/exampleCPP.git 
+*
 \*************************************************************************/
 #include "ecmcPv.h"
 
@@ -36,6 +47,7 @@ ecmcPv::ecmcPv(const std::string &channelName,
       isStarted_(false),
       typeValidated_(false),
       destructs_(false),
+      inUse_(false),
       index_(index),
       errorCode_(0), 
       valueLatestRead_(0),
@@ -46,19 +58,8 @@ ecmcPv::ecmcPv(const std::string &channelName,
   busyLock_.test_and_set();
 }
 
- void ecmcPv::init(PvaClientPtr const &pvaClient) {
-
-  // pvaClientChannel_ = pvaClient->createChannel(channelName_,providerName_);
-  // pvaClientChannel_->setStateChangeRequester(shared_from_this());
-  // pvaClientChannel_->issueConnect();
-
-  // // // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
-  //  ecmcGetValMutex_ = epicsMutexCreate();
-  //  if(!ecmcGetValMutex_) {
-  //    throw std::runtime_error("Error: Create Mutex failed.");
-  //  }
-
-  pva_ = pvaClient;
+ void ecmcPv::init() {
+ 
   // Create worker thread
   std::string threadname = "ecmc.cmd.pv"  + to_string(index_);
   cmdExeThread_ = epicsThreadCreate(threadname.c_str(), 0, 32768, f_cmd_exe, this);
@@ -70,14 +71,13 @@ ecmcPv::ecmcPv(const std::string &channelName,
 ecmcPv::ecmcPv() {
 }
 
-ecmcPvPtr ecmcPv::create(PvaClientPtr const & pvaClient,
-                         const std::string  & channelName, 
+ecmcPvPtr ecmcPv::create(const std::string  & channelName, 
                          const std::string  & providerName,
                          const std::string  & request,
                          int index)
 {
   ecmcPvPtr client(ecmcPvPtr(new ecmcPv(channelName, providerName, request, index)));
-  client->init(pvaClient);
+  client->init();
   return client;
 }
 
@@ -232,6 +232,29 @@ void ecmcPv::putCmd(double value) {
   return;
 }
 
+void ecmcPv::regCmd(PvaClientPtr const & pvaClient,
+                    const std::string  & channelName, 
+                    const std::string  & providerName,
+                    const std::string  & request) { // Async Commads
+  reset(); // reset if try again
+  
+  if(busyLock_.test_and_set()) {
+    errorCode_ = ECMC_PV_BUSY;
+    throw std::runtime_error("Error: Object busy. Reg operation to "+ channelName_ + ") failed." );
+  }  
+  inUse_ = true;
+  pva_ = pvaClient;
+  cmd_ =  ECMC_PV_CMD_REG;
+  channelName_ = channelName;
+  providerName_ = providerName;
+  request_ = request;
+  
+  //Execute cmd
+  doCmdEvent_.signal();
+
+  return;
+}
+
 bool ecmcPv::busy() {
   if(busyLock_.test_and_set()){
     return true;
@@ -243,16 +266,16 @@ bool ecmcPv::busy() {
   }  
 }
 
+bool ecmcPv::inUse() {
+  return inUse_;
+}
+
 bool ecmcPv::connected() {
   return channelConnected_ && monitorConnected_  && isStarted_ && putConnected_ && typeValidated_;
 }
 
  void ecmcPv::exeCmdThread() {
   
-  pvaClientChannel_ = pva_->createChannel(channelName_,providerName_);
-  pvaClientChannel_->setStateChangeRequester(shared_from_this());
-  pvaClientChannel_->issueConnect();
-
   // Create Mutex to protect valueLatestRead_ (accessed from 3 threads)
   ecmcGetValMutex_ = epicsMutexCreate();
   if(!ecmcGetValMutex_) {
@@ -268,6 +291,16 @@ bool ecmcPv::connected() {
     }
 
     switch(cmd_) {
+      case ECMC_PV_CMD_REG:
+        try{          
+          pvaClientChannel_ = pva_->createChannel(channelName_,providerName_);
+          pvaClientChannel_->setStateChangeRequester(shared_from_this());
+          pvaClientChannel_->issueConnect();          
+        }
+        catch(std::exception &e){
+          errorCode_ = ECMC_PV_REG_ERROR;
+        }
+        break;        
       case ECMC_PV_CMD_PUT:
         try{
           if(connected()) {

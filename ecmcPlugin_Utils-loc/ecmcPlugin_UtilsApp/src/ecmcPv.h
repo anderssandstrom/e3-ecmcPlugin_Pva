@@ -3,10 +3,21 @@
 * ecmc is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution. 
 *
-*  ecmcPv.h
+*  ecmcPv.cpp
 *
 *  Created on: May 12, 2020
 *      Author: anderssandstrom
+*
+*  Pv access support for ecmc:
+*  * pv_reg_asyn()  : async command to register a pv
+*  * pv_put_asyn()  : async command to write to a pv
+*  * pv_get_value() : return last value (from monitor)
+*  The async commands are executed in a worker thread. This was needed
+*  since even the "issue*()" commands was found to block for to 
+*  long time. 
+*
+*  Implementation is based on examples found in:
+*  https://github.com/epics-base/exampleCPP.git 
 *
 \*************************************************************************/
 
@@ -27,7 +38,8 @@ using namespace epics::pvAccess;
 using namespace epics::pvaClient;
 
 enum ecmc_pva_cmd {
-  ECMC_PV_CMD_NONE = 0,  
+  ECMC_PV_CMD_NONE = 0,
+  ECMC_PV_CMD_REG  = 1,
   ECMC_PV_CMD_PUT  = 2
 };
 
@@ -49,20 +61,25 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
 
   ~ecmcPv();
 
-  static ecmcPvPtr create(PvaClientPtr const & pvaClient,
+  static ecmcPvPtr create(//PvaClientPtr const & pvaClient,
                           const std::string  & channelName, 
                           const std::string  & providerName,
                           const std::string  & request,
                           int index);
-  void   init(PvaClientPtr const &pvaClient);
+  void   init(/*PvaClientPtr const &pvaClient*/);
   PvaClientMonitorPtr getPvaClientMonitor();
   int    getError();
   int    reset();
   void   start(const string &request);
   void   stop();  
   void   putCmd(double value); // Async Commads
+  void   regCmd(PvaClientPtr const & pvaClient,
+                const std::string  & channelName, 
+                const std::string  & providerName,
+                const std::string  & request); // Async Commads
   double getLastReadValue();
   bool   busy();
+  bool   inUse();
   bool   connected();
   void   exeCmdThread();
   std::string getChannelName();
@@ -93,6 +110,7 @@ class ecmcPv :  public PvaClientChannelStateChangeRequester,
   bool         isStarted_;
   bool         typeValidated_;
   bool         destructs_;
+  bool         inUse_;
   int          index_;
   int          errorCode_;  
   double       valueLatestRead_;
