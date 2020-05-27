@@ -17,8 +17,8 @@ A monitor is continiously updating the current value of the pv and making int ac
   * handle = pv_reg_async( pvName, provider ) : Exe. async cmd to register PV. Returns handle to PV-object or error (if < 0). Provider needs to be set to either "pva" or "ca" (ca to be able to access pv:s in EPICS 3.* IOC:s).  
   * error  = pv_put_async( handle, value ) : Exe async pv put command.  Retruns error-code.
   * value  = pv_value( handle ): Get value from last monitor update.
-  * busy   = pv_busy( handle ) : Return if PV-object is busy (busy if a put or a reg async commnd is executing).
-  * error  = pv_err( handle ) : Returns error code of PV-object (error > 0).
+  * busy   = pv_busy( handle ) : Return if PV-object is busy (busy if a pv_put_asyn() or a pv_reg_asyn() async command is executing).
+  * error  = pv_err( handle ) : Returns error code of PV-objects last command (error > 0).
   * connected = pv_connected(<handle>) : Return if pv is connected.
 
 ### Config options
