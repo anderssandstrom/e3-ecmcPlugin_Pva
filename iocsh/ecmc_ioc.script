@@ -49,7 +49,7 @@ epicsEnvSet(ECMC_PLUGIN_FILNAME,"/epics/base-7.0.3.1/require/3.1.2/siteMods/ecmc
 ${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG=MAX_PV_COUNT=5, REPORT=1"
 
 ##############################################################################
-## PLC 0: Generate a sine wave at 10Hz
+## PLC 0: Some pvAccess commands
 $(SCRIPTEXEC) $(ecmccfg_DIR)loadPLCFile.cmd, "PLC_ID=0, SAMPLE_RATE_MS=100,FILE=./plc/ecmc_pva.plc, PLC_MACROS='DBG=,PLC_ID=0'")
 
 ##############################################################################
