@@ -22,6 +22,9 @@ plc.
   * error  = pv_err( handle ) : Returns error code of PV-object (error > 0).
   * connected = pv_connected(<handle>) : Return if pv is connected.
 
+### Config options
+MAX_PV_COUNT=<count> : Sets the maximum number of pv:s to register. These pv objects will be allocated when module is loaded (before realtime).
+
 ### Record support
 The functions currently only support scalar values. Value field of following record types have been tested:
 * AI
@@ -67,7 +70,6 @@ Put BO to PV  :   0.00000
 ## EPICS utils:
   * started = ioc_get_started() : ecmc IOC up and running
   * state = ioc_get_state()   : ecmc IOC state (hook)
-
 
 ## Setup
 ```

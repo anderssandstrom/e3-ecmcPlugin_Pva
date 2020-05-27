@@ -21,6 +21,16 @@
 pvreg<double>*  pvRegObj;
 int maxPvs = ECMC_MAX_PVS_DEFAULT;
 
+int parseConfigStr(char *configStr) {
+// Only one OPTIONS
+  int tempValue = 0;
+  int nvals = sscanf(configStr, ECMC_PV_OPTION_MAX_PV_COUNT"=%d",&tempValue);
+  if (nvals == 1) {
+    maxPvs = tempValue;
+  }
+  return 0;
+}
+
 // Pre allocate objects at construct to minimize time jitter in runtime
 int initPvs() {
   try{

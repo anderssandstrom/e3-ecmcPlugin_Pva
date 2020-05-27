@@ -54,6 +54,7 @@ int pvaConstruct(char *configStr)
   }
   // create Pva object and register data callback
   lastConfStr = strdup(configStr);
+  parseConfigStr(lastConfStr);
 
   // Add refs to generic funcs in runtime since objects
   pluginDataDef.funcs[0].funcGenericObj = getPvRegObj();  
@@ -141,7 +142,7 @@ struct ecmcPluginData pluginDataDef = {
   // Description
   .desc = "Utility plugin for use with ecmc. Funcs: pvAccess, ioc status.",
   // Option description
-  .optionDesc = "No options",
+  .optionDesc = ECMC_PV_OPTION_MAX_PV_COUNT"=<count> : Set max number of pvs to connect to (defaults to 8).",
   // Plugin version
   .version = ECMC_EXAMPLE_PLUGIN_VERSION,
   // Optional construct func, called once at load. NULL if not definded.
