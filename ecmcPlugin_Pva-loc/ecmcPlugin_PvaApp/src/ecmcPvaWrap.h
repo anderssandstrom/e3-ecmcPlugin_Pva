@@ -3,14 +3,14 @@
 * ecmc is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution. 
 *
-*  ecmcUtilsWrap.h
+*  ecmcPvaWrap.h
 *
 *  Created on: Mar 22, 2020
 *      Author: anderssandstrom
 *
 \*************************************************************************/
-#ifndef ECMC_UTILS_WRAP_H_
-#define ECMC_UTILS_WRAP_H_
+#ifndef ECMC_PVA_WRAP_H_
+#define ECMC_PVA_WRAP_H_
 
 #include "ecmcPvDefs.h"
 
@@ -32,4 +32,4 @@ extern "C" {
 }
 # endif  // ifdef __cplusplus
 
-#endif  /* ECMC_UTILS_WRAP_H_ */
+#endif  /* ECMC_PVA_WRAP_H_ */

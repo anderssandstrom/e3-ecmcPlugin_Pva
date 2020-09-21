@@ -23,7 +23,7 @@ extern "C" {
 #include <string.h>
 
 #include "ecmcPluginDefs.h"
-#include "ecmcUtilsWrap.h"
+#include "ecmcPvaWrap.h"
 #include "ecmcPluginClient.h"
 #include "ecmcPvDefs.h"
 
@@ -44,7 +44,7 @@ extern struct ecmcPluginData pluginDataDef;
  *  Return value other than 0 will be considered error.
  *  configStr can be used for configuration parameters.
  **/
-int utilsConstruct(char *configStr)
+int pvaConstruct(char *configStr)
 {
   //This module is only allowed to load once  
   if(loaded && !ECMC_PLUGIN_ALLOW_MULTI_LOAD) {
@@ -65,7 +65,7 @@ int utilsConstruct(char *configStr)
 /** Optional function.
  *  Will be called once at unload.
  **/
-void utilsDestruct(void)
+void pvaDestruct(void)
 {
   cleanup();
   if(lastConfStr){
@@ -79,7 +79,7 @@ void utilsDestruct(void)
  *  this plugin to react on ecmc erro-I/epics/base-7.0.3.1/include/os/Linuxrs
  *  Return value other than 0 will be considered to be an error code in ecmc.
  **/
-int utilsRealtime(int ecmcError)
+int pvaRealtime(int ecmcError)
 { 
   lastEcmcError = ecmcError;
   return 0;
@@ -88,7 +88,7 @@ int utilsRealtime(int ecmcError)
 /** Link to data source here since all sources should be availabe at this stage
  *  (for example ecmc PLC variables are defined only at enter of realtime)
  **/
-int utilsEnterRT(){
+int pvaEnterRT(){
   return 0;
 }
 
@@ -96,7 +96,7 @@ int utilsEnterRT(){
  *  Will be called once just before leaving realtime mode
  *  Return value other than 0 will be considered error.
  **/
-int utilsExitRT(void){
+int pvaExitRT(void){
   return 0;
 }
 
@@ -140,23 +140,23 @@ struct ecmcPluginData pluginDataDef = {
   // Allways use ECMC_PLUG_VERSION_MAGIC
   .ifVersion = ECMC_PLUG_VERSION_MAGIC, 
   // Name 
-  .name = "ecmcPlugin_Utils",
+  .name = "ecmcPlugin_Pva",
   // Description
-  .desc = "Utility plugin for use with ecmc. Funcs: pvAccess, ioc status.",
+  .desc = "Pva plugin for use with ecmc. Funcs: pvAccess, ioc status.",
   // Option description
   .optionDesc = ECMC_PV_OPTION_MAX_PV_COUNT"=<count> : Set max number of pvs to connect to (defaults to 8).",
   // Plugin version
   .version = ECMC_EXAMPLE_PLUGIN_VERSION,
   // Optional construct func, called once at load. NULL if not definded.
-  .constructFnc = utilsConstruct,
+  .constructFnc = pvaConstruct,
   // Optional destruct func, called once at unload. NULL if not definded.
-  .destructFnc = utilsDestruct,
+  .destructFnc = pvaDestruct,
   // Optional func that will be called each rt cycle. NULL if not definded.
-  .realtimeFnc = utilsRealtime,
+  .realtimeFnc = pvaRealtime,
   // Optional func that will be called once just before enter realtime mode
-  .realtimeEnterFnc = utilsEnterRT,
+  .realtimeEnterFnc = pvaEnterRT,
   // Optional func that will be called once just before exit realtime mode
-  .realtimeExitFnc = utilsExitRT,
+  .realtimeExitFnc = pvaExitRT,
   // PLC funcs
   .funcs[0] =
       { /*----pv_reg_async----*/

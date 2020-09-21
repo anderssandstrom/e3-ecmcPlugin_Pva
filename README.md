@@ -1,6 +1,6 @@
-e3-ecmcPlugin_Utils
+e3-ecmcPlugin_Pva
 ======
-ESS Site-specific EPICS module : ecmcPlugin_Utils
+ESS Site-specific EPICS module : ecmcPlugin_Pva
 
 A shared library utility functions loadable into ecmc.
 

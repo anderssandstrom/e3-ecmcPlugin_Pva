@@ -41,7 +41,7 @@ ifneq ($(strip $(EXPRTK_DEP_VERSION)),)
 exprtk_VERSION=$(EXPRTK_DEP_VERSION)
 endif
 
-APP:=ecmcPlugin_UtilsApp
+APP:=ecmcPlugin_PvaApp
 APPDB:=$(APP)/Db
 APPSRC:=$(APP)/src
 
@@ -63,8 +63,8 @@ USR_INCLUDES += -I$(where_am_I)$(APPSRC)
 
 TEMPLATES += $(wildcard $(APPDB)/*.db)
 TEMPLATES += $(wildcard $(APPDB)/*.template)
-SOURCES += $(APPSRC)/ecmcPluginUtils.c
-SOURCES += $(APPSRC)/ecmcUtilsWrap.cpp
+SOURCES += $(APPSRC)/ecmcPluginPva.c
+SOURCES += $(APPSRC)/ecmcPvaWrap.cpp
 SOURCES += $(APPSRC)/ecmcPv.cpp
 
 db:
