@@ -23,7 +23,7 @@ extern "C" {
 #include <string.h>
 
 #include "ecmcPluginDefs.h"
-#include "ecmcPvaWrap.h"
+#include "ecmcUtilsWrap.h"
 #include "ecmcPluginClient.h"
 #include "ecmcPvDefs.h"
 
@@ -44,7 +44,7 @@ extern struct ecmcPluginData pluginDataDef;
  *  Return value other than 0 will be considered error.
  *  configStr can be used for configuration parameters.
  **/
-int pvaConstruct(char *configStr)
+int utilsConstruct(char *configStr)
 {
   //This module is only allowed to load once  
   if(loaded && !ECMC_PLUGIN_ALLOW_MULTI_LOAD) {
@@ -65,7 +65,7 @@ int pvaConstruct(char *configStr)
 /** Optional function.
  *  Will be called once at unload.
  **/
-void pvaDestruct(void)
+void utilsDestruct(void)
 {
   cleanup();
   if(lastConfStr){
@@ -79,7 +79,7 @@ void pvaDestruct(void)
  *  this plugin to react on ecmc erro-I/epics/base-7.0.3.1/include/os/Linuxrs
  *  Return value other than 0 will be considered to be an error code in ecmc.
  **/
-int pvaRealtime(int ecmcError)
+int utilsRealtime(int ecmcError)
 { 
   lastEcmcError = ecmcError;
   return 0;
@@ -88,7 +88,7 @@ int pvaRealtime(int ecmcError)
 /** Link to data source here since all sources should be availabe at this stage
  *  (for example ecmc PLC variables are defined only at enter of realtime)
  **/
-int pvaEnterRT(){
+int utilsEnterRT(){
   return 0;
 }
 
@@ -96,12 +96,12 @@ int pvaEnterRT(){
  *  Will be called once just before leaving realtime mode
  *  Return value other than 0 will be considered error.
  **/
-int pvaExitRT(void){
+int utilsExitRT(void){
   return 0;
 }
 
 // Normal PLC functions
-// double pvaExeGetCmd(double handle) {
+// double utilsExeGetCmd(double handle) {
 //   return (double)exeGetDataCmd((int)handle);
 // }
 
@@ -133,6 +133,8 @@ double pvaGetIOCState() {
   return (double)getEcmcEpicsIOCState();
 }
 
+
+
 // Register data for plugin so ecmc know what to use
 struct ecmcPluginData pluginDataDef = {
   // Allways use ECMC_PLUG_VERSION_MAGIC
@@ -146,15 +148,15 @@ struct ecmcPluginData pluginDataDef = {
   // Plugin version
   .version = ECMC_EXAMPLE_PLUGIN_VERSION,
   // Optional construct func, called once at load. NULL if not definded.
-  .constructFnc = pvaConstruct,
+  .constructFnc = utilsConstruct,
   // Optional destruct func, called once at unload. NULL if not definded.
-  .destructFnc = pvaDestruct,
+  .destructFnc = utilsDestruct,
   // Optional func that will be called each rt cycle. NULL if not definded.
-  .realtimeFnc = pvaRealtime,
+  .realtimeFnc = utilsRealtime,
   // Optional func that will be called once just before enter realtime mode
-  .realtimeEnterFnc = pvaEnterRT,
+  .realtimeEnterFnc = utilsEnterRT,
   // Optional func that will be called once just before exit realtime mode
-  .realtimeExitFnc = pvaExitRT,
+  .realtimeExitFnc = utilsExitRT,
   // PLC funcs
   .funcs[0] =
       { /*----pv_reg_async----*/
@@ -190,23 +192,6 @@ struct ecmcPluginData pluginDataDef = {
         .funcArg10 = NULL,
         .funcGenericObj = NULL,
       },
-  // .funcs[2] =
-  //     { /*----pv_get_async----*/
-  //       .funcName = ECMC_PV_PLC_CMD_PV_GET_ASYNC,
-  //       .funcDesc = "error = " ECMC_PV_PLC_CMD_PV_GET_ASYNC "(<handle>) : Execute async pv_get cmd.",
-  //       .funcArg0 = NULL,
-  //       .funcArg1 = pvaExeGetCmd,
-  //       .funcArg2 = NULL,
-  //       .funcArg3 = NULL,
-  //       .funcArg4 = NULL,
-  //       .funcArg5 = NULL,
-  //       .funcArg6 = NULL,
-  //       .funcArg7 = NULL,
-  //       .funcArg8 = NULL,
-  //       .funcArg9 = NULL,
-  //       .funcArg10 = NULL,
-  //       .funcGenericObj = NULL,
-  //     },
   .funcs[2] =
       { /*----pv_get_value----*/
         .funcName = ECMC_PV_PLC_CMD_PV_GET_VALUE,

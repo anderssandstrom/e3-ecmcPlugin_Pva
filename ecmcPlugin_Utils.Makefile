@@ -64,7 +64,7 @@ USR_INCLUDES += -I$(where_am_I)$(APPSRC)
 TEMPLATES += $(wildcard $(APPDB)/*.db)
 TEMPLATES += $(wildcard $(APPDB)/*.template)
 SOURCES += $(APPSRC)/ecmcPluginUtils.c
-SOURCES += $(APPSRC)/ecmcPvaWrap.cpp
+SOURCES += $(APPSRC)/ecmcUtilsWrap.cpp
 SOURCES += $(APPSRC)/ecmcPv.cpp
 
 db:
