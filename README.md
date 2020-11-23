@@ -1,6 +1,6 @@
-e3-ecmcPlugin_Pva
+e3-ecmc_plugin_pva
 ======
-ESS Site-specific EPICS module : ecmcPlugin_Pva
+ESS Site-specific EPICS module : ecmc_plugin_pva
 
 A shared library utility functions loadable into ecmc.
 
@@ -82,7 +82,7 @@ Plugin info:
   Name                 = ecmcPlugin_Utils
   Description          = Utility plugin for use with ecmc. Funcs: pvAccess, ioc status.
   Option description   = MAX_PV_COUNT=<count> : Set max number of pvs to connect to (defaults to 8).
-  Filename             = /epics/base-7.0.3.1/require/3.1.2/siteMods/ecmcPlugin_Utils/master/lib/linux-arm/libecmcPlugin_Utils.so
+  Filename             = /epics/base-7.0.4/require/3.3.0/siteMods/ecmc_plugin_pva/master/lib/linux-arm/libecmc_plugin_pva.so
   Config string        = MAX_PV_COUNT=5
   Version              = 2
   Interface version    = 65536 (ecmc = 65536)

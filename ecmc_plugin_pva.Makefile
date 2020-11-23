@@ -41,7 +41,7 @@ ifneq ($(strip $(EXPRTK_DEP_VERSION)),)
 exprtk_VERSION=$(EXPRTK_DEP_VERSION)
 endif
 
-APP:=ecmcPlugin_PvaApp
+APP:=ecmc_plugin_pvaApp
 APPDB:=$(APP)/Db
 APPSRC:=$(APP)/src
 
